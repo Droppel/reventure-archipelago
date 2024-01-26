@@ -12,6 +12,7 @@ class ItemData(typing.NamedTuple):
 
 item_table: Dict[str, ItemData] = {
     #Item Locations
+    'Nothing': ItemData(reventureOffset, False),
     'SpawnSwordPedestalItem': ItemData(reventureOffset+1, True),
     'SpawnSwordChest': ItemData(reventureOffset+2, True),
     'SpawnShovelChest': ItemData(reventureOffset+3, True),

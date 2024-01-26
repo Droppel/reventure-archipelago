@@ -15,6 +15,8 @@ class ReventureWeb(WebWorld):
         "A guide to setting up Reventure for Archipelago. "
         "This guide covers single-player, multiworld, and related software.",
         "English",
+        "reventure_en.md",
+        "reventure/en",
         ["Droppel"]
     )]
 
@@ -37,10 +39,13 @@ class ReventureWorld(World):
     def create_items(self):
         # Fill out our pool with our items from item_pool, assuming 1 item if not present in item_pool
         pool = []
+        total_location_count = len(self.multiworld.get_unfilled_locations(self.player))
         for name, data in item_table.items():
             item = ReventureItem(name, self.player)
             pool.append(item)
 
+        for _ in range(0, total_location_count - len(pool)):
+            pool.append(self.create_item(self.get_filler_item_name()))
         self.multiworld.itempool += pool
 
     def set_rules(self):
@@ -60,7 +65,7 @@ class ReventureWorld(World):
         return slot_data
 
     def get_filler_item_name(self) -> str:
-        return "Filler Item"
+        return "Nothing"
 
 
 def create_region(world: MultiWorld, player: int, name: str, locations=None, exits=None):
