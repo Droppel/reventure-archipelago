@@ -3,12 +3,12 @@ import typing
 from BaseClasses import Item
 from typing import Dict
 
-reventureOffset = 10000
+reventureOffset = 900270000
 
 class ItemData(typing.NamedTuple):
     code: typing.Optional[int]
     progression: bool
-    hasWeight: bool = False
+    event: bool = False
 
 item_table: Dict[str, ItemData] = {
     #Item Locations
@@ -55,11 +55,25 @@ item_table: Dict[str, ItemData] = {
     'SpawnShopkeeper': ItemData(reventureOffset+36, True),
     'SpawnMimic': ItemData(reventureOffset+37, True),
     'SpawnKing': ItemData(reventureOffset+38, True),
+    'GrowChicken': ItemData(reventureOffset+39, True),
 
     #Cosmetic
-    'EnableCloset': ItemData(reventureOffset+39, False),
-    'BuildStatue': ItemData(reventureOffset+40, True),
-    'AddPC': ItemData(reventureOffset+41, False),
-    'SpawnDolphins': ItemData(reventureOffset+42, False),
-    'SpawnMimicPet': ItemData(reventureOffset+43, False),
+    'EnableCloset': ItemData(reventureOffset+40, False),
+    'BuildStatue': ItemData(reventureOffset+41, True),
+    'AddPC': ItemData(reventureOffset+42, False),
+    'SpawnDolphins': ItemData(reventureOffset+43, False),
+    'SpawnMimicPet': ItemData(reventureOffset+44, False),
+
+    #Milestones
+    'EarthGem': ItemData(reventureOffset+45, True),
+    'FireGem': ItemData(reventureOffset+46, True),
+    'WaterGem': ItemData(reventureOffset+47, True),
+    'WindGem': ItemData(reventureOffset+48, True),
+
+    #Ending
+    'Victory': ItemData(None, True, True),
+}
+
+event_item_pairs: Dict[str, str] = {
+    "UltimateEnding": "Victory",
 }

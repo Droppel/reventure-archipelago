@@ -1,4 +1,4 @@
-reventureEndingOffset = 20000
+reventureEndingOffset = 900271000
 
 location_table = {
     'PickupAnvil': reventureEndingOffset+1,
@@ -100,5 +100,5 @@ location_table = {
     'PrincessToDesertGate': reventureEndingOffset+97,
     'FeedTheKing': reventureEndingOffset+98,
     'SacrificeEveryItem': reventureEndingOffset+99,
-    'UltimateEnding': reventureEndingOffset+100
+    'UltimateEnding': None,
 }
