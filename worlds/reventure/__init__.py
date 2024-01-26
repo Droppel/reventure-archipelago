@@ -1,7 +1,7 @@
 import string
 
 from BaseClasses import Entrance, Item, ItemClassification, Location, MultiWorld, Region, Tutorial
-from .Items import item_table
+from .Items import item_table, event_item_pairs
 from .Locations import location_table
 from .Options import reventure_options
 from .Regions import create_regions
@@ -41,12 +41,23 @@ class ReventureWorld(World):
         pool = []
         total_location_count = len(self.multiworld.get_unfilled_locations(self.player))
         for name, data in item_table.items():
-            item = ReventureItem(name, self.player)
-            pool.append(item)
+            if not data.event:
+                item = ReventureItem(name, self.player)
+                pool.append(item)
+
+        # Add extra copies of grow chicken because it works progressive
+        pool.append(self.create_item("GrowChicken"))
+        pool.append(self.create_item("GrowChicken"))
+        pool.append(self.create_item("GrowChicken"))
 
         for _ in range(0, total_location_count - len(pool)):
             pool.append(self.create_item(self.get_filler_item_name()))
         self.multiworld.itempool += pool
+
+        # Final Goal Event
+        for event, item in event_item_pairs.items():
+            event_item = ReventureItem(item, self.player)
+            self.multiworld.get_location(event, self.player).place_locked_item(event_item)
 
     def set_rules(self):
         set_rules(self.multiworld, self.player)
