@@ -23,7 +23,7 @@ class ReventureWeb(WebWorld):
 
 class ReventureWorld(World):
     """
-    An adventure game where you find creative ways to die (And sometimes achieve "victories")
+    An adventure game where you find creative ways to die (And sometimes win)
     """
 
     option_definitions = reventure_options
@@ -39,11 +39,12 @@ class ReventureWorld(World):
     def create_items(self):
         # Fill out our pool with our items from item_pool, assuming 1 item if not present in item_pool
         pool = []
-        total_location_count = len(self.multiworld.get_unfilled_locations(self.player))
+        total_location_count = len(self.multiworld.get_unfilled_locations(self.player)) - len(event_item_pairs)
         for name, data in item_table.items():
-            if not data.event:
-                item = ReventureItem(name, self.player)
-                pool.append(item)
+            if data.event or (self.options.gems != 1 and data.gem):
+                continue
+            item = ReventureItem(name, self.player)
+            pool.append(item)
 
         # Add extra copies of grow chicken because it works progressive
         pool.append(self.create_item("GrowChicken"))
@@ -60,7 +61,7 @@ class ReventureWorld(World):
             self.multiworld.get_location(event, self.player).place_locked_item(event_item)
 
     def set_rules(self):
-        set_rules(self.multiworld, self.player)
+        set_rules(self.options, self.multiworld, self.player)
 
     def create_item(self, name: str) -> Item:
         return ReventureItem(name, self.player)
