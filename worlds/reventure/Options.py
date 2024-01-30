@@ -1,42 +1,21 @@
 import typing
-from Options import TextChoice, Option, Range, Toggle
+from Options import Option, Range, Choice
 
 
-# class Character(TextChoice):
-#     """Enter the internal ID of the character to use.
-
-#       if you don't know the exact ID to enter with the mod installed go to
-#      `Mods -> Archipelago Multi-world -> config` to view a list of installed modded character IDs.
-
-#      the downfall characters will only work if you have downfall installed.
-
-#      Spire Take the Wheel will have your client pick a random character from the list of all your installed characters
-#      including custom ones.
-
-#      if the chosen character mod is not installed it will default back to 'The Ironclad'
-#      """
-#     display_name = "Character"
-#     option_The_Ironclad = 0
-#     option_The_Silent = 1
-#     option_The_Defect = 2
-#     option_The_Watcher = 3
-#     option_The_Hermit = 4
-#     option_The_Slime_Boss = 5
-#     option_The_Guardian = 6
-#     option_The_Hexaghost = 7
-#     option_The_Champ = 8
-#     option_The_Gremlins = 9
-#     option_The_Automaton = 10
-#     option_The_Snecko = 11
-#     option_spire_take_the_wheel = 12
-
+class GemSettings(Choice):
+    """How the 4 Gems are handled."""
+    display_name = "Gems"
+    option_vanilla = 0
+    option_randomized = 1
+    option_free = 2
+    default = 1
 
 class RequiredEndings(Range):
     """How many endings are required to be completed to win the game."""
     display_name = "Endings"
     range_start = 1
-    range_end = 100
-    default = 3
+    range_end = 99
+    default = 40
 
 
 # class FinalAct(Toggle):
@@ -57,4 +36,5 @@ class RequiredEndings(Range):
 
 reventure_options: typing.Dict[str, type(Option)] = {
     "endings": RequiredEndings,
+    "gems": GemSettings,
 }

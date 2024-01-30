@@ -9,6 +9,7 @@ class ItemData(typing.NamedTuple):
     code: typing.Optional[int]
     progression: bool
     event: bool = False
+    gem: bool = False
 
 item_table: Dict[str, ItemData] = {
     #Item Locations
@@ -65,10 +66,10 @@ item_table: Dict[str, ItemData] = {
     'SpawnMimicPet': ItemData(reventureOffset+44, False),
 
     #Milestones
-    'EarthGem': ItemData(reventureOffset+45, True),
-    'FireGem': ItemData(reventureOffset+46, True),
-    'WaterGem': ItemData(reventureOffset+47, True),
-    'WindGem': ItemData(reventureOffset+48, True),
+    'EarthGem': ItemData(reventureOffset+45, True, gem=True),
+    'FireGem': ItemData(reventureOffset+46, True, gem=True),
+    'WaterGem': ItemData(reventureOffset+47, True, gem=True),
+    'WindGem': ItemData(reventureOffset+48, True, gem=True),
 
     #Ending
     'Victory': ItemData(None, True, True),
