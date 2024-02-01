@@ -50,26 +50,32 @@ item_table: Dict[str, ItemData] = {
     'GrowVine': ItemData(reventureOffset+32, True),
     'OpenCastleFloor': ItemData(reventureOffset+33, True),
     'UnlockFacePlantStone': ItemData(reventureOffset+34, True),
+    'OpenSewerPipe': ItemData(reventureOffset+35, True),
+    'DarkstoneLeverLeft': ItemData(reventureOffset+36, True),
+    'DarkstoneLeverMiddle': ItemData(reventureOffset+37, True),
+    'DarkstoneLeverRight': ItemData(reventureOffset+38, True),
 
     #NPCs
-    'SpawnDragon': ItemData(reventureOffset+35, True),
-    'SpawnShopkeeper': ItemData(reventureOffset+36, True),
-    'SpawnMimic': ItemData(reventureOffset+37, True),
-    'SpawnKing': ItemData(reventureOffset+38, True),
-    'GrowChicken': ItemData(reventureOffset+39, True),
-
+    'SpawnDragon': ItemData(reventureOffset+39, True),
+    'SpawnShopkeeper': ItemData(reventureOffset+40, True),
+    'SpawnMimic': ItemData(reventureOffset+41, True),
+    'SpawnKing': ItemData(reventureOffset+42, True),
+    'GrowChicken': ItemData(reventureOffset+43, True),
+    'SpawnElder': ItemData(reventureOffset+44, True),
+    'SpawnBoulderNPC': ItemData(reventureOffset+45, True),
+    
     #Cosmetic
-    'EnableCloset': ItemData(reventureOffset+40, False),
-    'BuildStatue': ItemData(reventureOffset+41, True),
-    'AddPC': ItemData(reventureOffset+42, False),
-    'SpawnDolphins': ItemData(reventureOffset+43, False),
-    'SpawnMimicPet': ItemData(reventureOffset+44, False),
+    'EnableCloset': ItemData(reventureOffset+46, False),
+    'BuildStatue': ItemData(reventureOffset+47, True),
+    'AddPC': ItemData(reventureOffset+48, False),
+    'SpawnDolphins': ItemData(reventureOffset+49, False),
+    'SpawnMimicPet': ItemData(reventureOffset+50, False),
 
     #Milestones
-    'EarthGem': ItemData(reventureOffset+45, True, gem=True),
-    'FireGem': ItemData(reventureOffset+46, True, gem=True),
-    'WaterGem': ItemData(reventureOffset+47, True, gem=True),
-    'WindGem': ItemData(reventureOffset+48, True, gem=True),
+    'EarthGem': ItemData(reventureOffset+51, True, gem=True),
+    'FireGem': ItemData(reventureOffset+52, True, gem=True),
+    'WaterGem': ItemData(reventureOffset+53, True, gem=True),
+    'WindGem': ItemData(reventureOffset+54, True, gem=True),
 
     #Ending
     'Victory': ItemData(None, True, True),
