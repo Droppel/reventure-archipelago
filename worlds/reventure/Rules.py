@@ -87,7 +87,7 @@ class ReventureLogic(LogicMixin):
             return False
 
     def _reventure_can_reach_princessportal_with_item(self, player: int) -> bool:
-        return self.has("UnlockMirrorPortal", player) and (self._reventure_has_chicken(player) or self.has("GrowVine", player))
+        return self.has("UnlockMirrorPortal", player) and (self.has("GrowVine", player) or (self._reventure_has_chicken(player) and (self._reventure_has_sword(player) or self.has_any(["SpawnHookChest", "UnlockGeyserWaterfall"], player))))
 
     def _reventure_can_reach_princess_with_item(self, player: int) -> bool:
         return self.has("SpawnPrincessItem", player) and (self._reventure_can_reach_princessportal_with_item(player) or self.has_any(["SpawnHookChest", "UnlockElevatorButton"], player))
