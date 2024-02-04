@@ -155,7 +155,7 @@ def set_rules(options: PerGameCommonOptions, multiworld: MultiWorld, p: int):
     set_rule(multiworld.get_location("StayAfk", p), lambda state: True)
     set_rule(multiworld.get_location("PlaceBombUnderCastle", p), lambda state: state.has("SpawnBombsChest", p))
     set_rule(multiworld.get_location("DontKillMinions", p), lambda state: True)
-    set_rule(multiworld.get_location("FindTreasure", p), lambda state: state.has("SpawnShovelChest", p))
+    set_rule(multiworld.get_location("FindTreasure", p), lambda state: state.has("SpawnShovelChest", p) and (state._reventure_has_sword or state.has_any(["SpawnHookChest", "UnlockGeyserWaterfall"], p)))
     set_rule(multiworld.get_location("KillChicken", p), lambda state: state._reventure_has_sword(p) and state._reventure_has_chicken(p))
     set_rule(multiworld.get_location("StabPrincess", p), lambda state: state._reventure_has_sword(p) and state._reventure_can_reach_princess_with_item(p))
     set_rule(multiworld.get_location("OverhealByFairies", p), lambda state: True)
