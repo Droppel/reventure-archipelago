@@ -182,7 +182,7 @@ def set_rules(options: PerGameCommonOptions, multiworld: MultiWorld, p: int):
     set_rule(multiworld.get_location("MakeBabiesWithPrincess", p), lambda state: state._reventure_has_sword(p) and state._reventure_can_reach_princess_with_item(p))
     set_rule(multiworld.get_location("KillAllDevsHell", p), lambda state: state._reventure_has_sword(p) and state.has("SpawnPrincessItem", p) and (state.has("SpawnHookChest", p) or (state.has("SpawnShovelChest", p) and state._reventure_has_chicken(p) and (state.has("UnlockElevatorButton", p) or state._reventure_can_reach_princessportal_with_item(p)))))
     set_rule(multiworld.get_location("DesertEnd", p), lambda state: state._reventure_has_weight(p, 4) and state.has("UnlockGeyserDesert2", p))
-    set_rule(multiworld.get_location("FindAlienLarvae", p), lambda state: state.has("SpawnShovelChest", p))
+    set_rule(multiworld.get_location("FindAlienLarvae", p), lambda state: state.has_any(["SpawnShovelChest", "SpawnPrincessItem"], p))
     set_rule(multiworld.get_location("FaceDarkLordWithShield", p), lambda state: state.has_all(["SpawnShieldChest", "SpawnPrincessItem"], p) and (state._reventure_can_reach_princessportal_with_item(p) or (state.has_any(["SpawnHookChest", "UnlockElevatorButton"], p) and (state._reventure_has_sword(p) or state._reventure_has_chicken(p) or state.has_any(["SpawnShovelChest", "UnlockShopCannon", "UnlockGeyserVolcanoe"], p)))))
     set_rule(multiworld.get_location("MultipleDesertJumps", p), lambda state: state._reventure_has_weight(p, 4))
     set_rule(multiworld.get_location("DatePrincessAndDragon", p), lambda state: state.has_all(["SpawnPrincessItem", "SpawnDragon"], p))
