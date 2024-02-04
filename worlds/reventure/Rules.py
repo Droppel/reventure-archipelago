@@ -119,7 +119,7 @@ def set_rules(options: PerGameCommonOptions, multiworld: MultiWorld, p: int):
     set_rule(multiworld.get_location("EatenByFakePrincess", p), lambda state: state.has("SpawnMimic", p))
     set_rule(multiworld.get_location("ClimbMountain", p), lambda state: state.has("SpawnStrawberry", p))
     set_rule(multiworld.get_location("StabMinionMultipleTimes", p), lambda state: state._reventure_has_sword(p))
-    set_rule(multiworld.get_location("CrushedByOwnStuff", p), lambda state: state._reventure_has_weight(p, 5))
+    set_rule(multiworld.get_location("CrushedByOwnStuff", p), lambda state: state._reventure_has_weight(p, 5) and state.has("SpawnHookChest", p)) # Not fully exhaustive
     set_rule(multiworld.get_location("ShootCannonballToCastle", p), lambda state: state._reventure_has_nuke(p) and state.has("UnlockShopCannon", p))
     set_rule(multiworld.get_location("CaughtByOwnBomb", p), lambda state: state.has("SpawnBombsChest", p))
     set_rule(multiworld.get_location("DragonWithShield", p), lambda state: state.has_all(["SpawnDragon", "SpawnShieldChest"], p))
