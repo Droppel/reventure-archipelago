@@ -49,7 +49,7 @@ class ReventureLogic(LogicMixin):
     
     def _reventure_has_items(self, player: int, req: int) -> bool:
         items = 0
-        valid_items = ["SpawnHookChest", "SpawnBombsChest", "SpawnBombsChest", "SpawnShieldChest", "SpawnShovelChest", "SpawnLavaTrinketChest",
+        valid_items = ["SpawnHookChest", "SpawnBombsChest", "SpawnShieldChest", "SpawnShovelChest", "SpawnLavaTrinketChest",
             "SpawnWhistleChest", "SpawnBoomerang", "SpawnMrHugsChest", "SpawnMapChest", "SpawnCompassChest"]
         for item in valid_items:
             if self.has(item, player):
