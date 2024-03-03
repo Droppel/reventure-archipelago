@@ -74,7 +74,7 @@ class ReventureLogic(LogicMixin):
             # Inverted because it's faster
             invreq = 100 - req
             for loc in locations:
-                if (loc.name == "UltimateEnding"):
+                if (loc.name == "100_UltimateEnding"):
                     continue
                 count += not loc.can_reach(self)
                 if count >= invreq:
@@ -82,7 +82,7 @@ class ReventureLogic(LogicMixin):
             return True
         else:
             for loc in locations:
-                if (loc.name == "UltimateEnding"):
+                if (loc.name == "100_UltimateEnding"):
                     continue
                 count += loc.can_reach(self)
                 if count >= req:
