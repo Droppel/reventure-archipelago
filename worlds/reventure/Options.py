@@ -24,6 +24,13 @@ class RequireFailableJumps(Toggle):
     option_false = 0
     default = 0
 
+class RequireHardCombat(Toggle):
+    """This includes jumps in logic that are difficult and result in death if missed"""
+    display_name = "RequireHardCombat"
+    option_true = 1
+    option_false = 0
+    default = 0
+
 # class FinalAct(Toggle):
 #     """Whether you will need to collect the 3 keys and beat the final act to complete the game."""
 #     display_name = "Final Act"
@@ -44,4 +51,5 @@ reventure_options: typing.Dict[str, type(Option)] = {
     "endings": RequiredEndings,
     "gems": GemSettings,
     "hardjumps": RequireFailableJumps,
+    "hardcombat": RequireHardCombat,
 }
