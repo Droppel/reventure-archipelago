@@ -159,7 +159,7 @@ def set_rules(options: PerGameCommonOptions, multiworld: MultiWorld, p: int):
     set_rule(multiworld.get_location("54_HugBoulder", p), lambda state: state.has("SpawnMrHugsChest", p) and state.has("SpawnBoulderNPC", p))
     set_rule(multiworld.get_location("55_JumpOffTheBalconyWithPrincess", p), lambda state: state.has("SpawnPrincessItem", p))
     set_rule(multiworld.get_location("56_ShootCannonballToShop", p), lambda state: state._reventure_has_nuke(p) and state.has("UnlockCastleToShopCannon", p)
-             and state._reventure_can_past_castle_with_item(p))
+             and state._reventure_can_pass_castle_with_item(p))
     set_rule(multiworld.get_location("57_HugPrincess", p), lambda state: state.has_all(["SpawnMrHugsChest", "SpawnPrincessItem"], p))
     set_rule(multiworld.get_location("58_JumpOffTheBalcony", p), lambda state: True)
     set_rule(multiworld.get_location("59_StayAfk", p), lambda state: True)

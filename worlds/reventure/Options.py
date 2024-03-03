@@ -1,5 +1,5 @@
 import typing
-from Options import Option, Range, Choice
+from Options import Option, Range, Choice, Toggle
 
 
 class GemSettings(Choice):
@@ -17,6 +17,12 @@ class RequiredEndings(Range):
     range_end = 99
     default = 40
 
+class RequireFailableJumps(Toggle):
+    """This includes jumps in logic that are difficult and result in death if missed"""
+    display_name = "RequireFailableJumps"
+    option_true = 1
+    option_false = 0
+    default = 0
 
 # class FinalAct(Toggle):
 #     """Whether you will need to collect the 3 keys and beat the final act to complete the game."""
@@ -37,4 +43,5 @@ class RequiredEndings(Range):
 reventure_options: typing.Dict[str, type(Option)] = {
     "endings": RequiredEndings,
     "gems": GemSettings,
+    "hardjumps": RequireFailableJumps,
 }
