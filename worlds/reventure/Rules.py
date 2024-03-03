@@ -50,10 +50,12 @@ class ReventureLogic(LogicMixin):
     def _reventure_has_items(self, player: int, req: int) -> bool:
         items = 0
         valid_items = ["SpawnHookChest", "SpawnBombsChest", "SpawnShieldChest", "SpawnShovelChest", "SpawnLavaTrinketChest",
-            "SpawnWhistleChest", "SpawnBoomerang", "SpawnMrHugsChest", "SpawnMapChest", "SpawnCompassChest"]
+            "SpawnWhistleChest", "SpawnMrHugsChest", "SpawnMapChest", "SpawnCompassChest"]
         for item in valid_items:
             if self.has(item, player):
                 items += 1
+        if self.has("SpawnBoomerang", player) and (self._reventure_has_chicken(player) or self.has("SpawnHookChest", player)):
+            items += 1
         if self._reventure_has_sword(player):
             items += 1
         if self._reventure_has_nuke(player):
@@ -213,7 +215,7 @@ def set_rules(options: PerGameCommonOptions, multiworld: MultiWorld, p: int):
     set_rule(multiworld.get_location("96_AboardPirateShip", p), lambda state: True)
     set_rule(multiworld.get_location("97_SwimIntoTheOcean", p), lambda state: True)
     set_rule(multiworld.get_location("98_FeedTheMimic", p), lambda state: state._reventure_has_burger(p) and state.has("SpawnMimic", p)
-             and (state.has_any(["SpawnHookChest", "UnlockElevatorButton", "UnlockCallElevatorButtons"], p) or state._reventure_can_reach_princessportal_with_item(p)))
+             and (state.has_any(["SpawnHookChest", "UnlockElevatorButton", "UnlockCallElevatorButtons"], p) or state.has_all(["GrowVine", "UnlockMirrorPortal"], p)))
     set_rule(multiworld.get_location("99_FeedTheKing", p), lambda state: state._reventure_has_burger(p) and state.has("SpawnKing", p))
     if options.gems == 0:
         set_rule(multiworld.get_location("100_UltimateEnding", p), lambda state: state._reventure_has_endings(p, options.endings-1) and state.has_all(["SpawnShovelChest", "SpawnHookChest"], p) and state._reventure_has_weight(p, 4))
