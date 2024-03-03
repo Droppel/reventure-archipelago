@@ -82,5 +82,5 @@ item_table: Dict[str, ItemData] = {
 }
 
 event_item_pairs: Dict[str, str] = {
-    "UltimateEnding": "Victory",
+    "100_UltimateEnding": "Victory",
 }
