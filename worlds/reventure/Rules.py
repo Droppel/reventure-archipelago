@@ -21,9 +21,6 @@ class ReventureLogic(LogicMixin):
     def _reventure_has_nuke(self, player: int) -> bool:
         return self.has_all(["SpawnNukeItem", "SpawnHookChest"], player)
     
-    def _reventure_has_boomerang(self, player: int) -> bool:
-        return self.has("SpawnBoomerang", player) and (self.has("SpawnHookChest", player) or (self._reventure_has_chicken(player) and  self._reventure_can_pass_castle_with_item(player)))
-
     def _reventure_has_weight(self, player: int, req: int) -> bool:
         weightedItems = 0
         if self._reventure_has_sword(player):
@@ -40,7 +37,7 @@ class ReventureLogic(LogicMixin):
             weightedItems += 1
         if self.has("SpawnWhistleChest", player):
             weightedItems += 1
-        if self._reventure_has_boomerang(player):
+        if self.has("SpawnBoomerang", player):
             weightedItems += 1
         if self._reventure_has_nuke(player):
             weightedItems += 1
@@ -53,12 +50,10 @@ class ReventureLogic(LogicMixin):
     def _reventure_has_items(self, player: int, req: int) -> bool:
         items = 0
         valid_items = ["SpawnHookChest", "SpawnBombsChest", "SpawnShieldChest", "SpawnShovelChest", "SpawnLavaTrinketChest",
-            "SpawnWhistleChest", "SpawnMrHugsChest", "SpawnMapChest", "SpawnCompassChest"]
+            "SpawnWhistleChest", "SpawnBoomerang", "SpawnMrHugsChest", "SpawnMapChest", "SpawnCompassChest"]
         for item in valid_items:
             if self.has(item, player):
                 items += 1
-        if self._reventure_has_boomerang(player):
-            items += 1
         if self._reventure_has_sword(player):
             items += 1
         if self._reventure_has_nuke(player):
@@ -203,7 +198,7 @@ def set_rules(options: PerGameCommonOptions, multiworld: MultiWorld, p: int):
     set_rule(multiworld.get_location("84_ShootCannonballToTown", p), lambda state: state._reventure_has_nuke(p) and state.has("UnlockDarkCastleCannon", p) 
              and state._reventure_can_pass_castle_with_item(p))
     set_rule(multiworld.get_location("85_KillAllFairies", p), lambda state: state._reventure_has_sword(p) or state.has("SpawnMrHugsChest", p)
-             or (state._reventure_has_boomerang(p) and (state.has("SpawnHookChest", p) or (state._reventure_has_chicken(p) or state._reventure_can_pass_castle_with_item(p)))))
+             or (state.has("SpawnBoomerang", p) and (state.has("SpawnHookChest", p) or (state._reventure_has_chicken(p) or state._reventure_can_pass_castle_with_item(p)))))
     set_rule(multiworld.get_location("86_MakeBabiesWithPrincess", p), lambda state: state._reventure_has_sword(p) and state._reventure_can_reach_princess_with_item(p))
     set_rule(multiworld.get_location("87_KillAllDevsHell", p), lambda state: state._reventure_has_sword(p) and state._reventure_can_reach_princess_with_item(p)
              and (state.has("SpawnHookChest", p) or (state._reventure_has_chicken(p) and state.has("SpawnShovelChest", p))))
