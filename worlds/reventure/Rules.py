@@ -136,7 +136,7 @@ def set_rules(options: PerGameCommonOptions, multiworld: MultiWorld, p: int):
     set_rule(multiworld.get_location("31_DestroyAllPots", p), lambda state: state._reventure_has_sword(p))
     set_rule(multiworld.get_location("32_StabBoulder", p), lambda state: state._reventure_has_sword(p) and state.has("SpawnBoulderNPC", p))
     set_rule(multiworld.get_location("33_LeapOfFaithFromTheMountain", p), lambda state: True)
-    set_rule(multiworld.get_location("34_ElevatorCrush", p), lambda state: state.has_any(["UnlockElevatorButton", "UnlockCallElevatorButtons"], p))
+    set_rule(multiworld.get_location("34_ElevatorCrush", p), lambda state: state.has_any(["UnlockElevatorButton", "UnlockCallElevatorButtons", "SpawnPrincessItem"], p))
     set_rule(multiworld.get_location("35_GetIntoThePipe", p), lambda state: state.has("OpenSewerPipe", p))
     set_rule(multiworld.get_location("36_DragonWithFireTrinket", p), lambda state: state.has_all(["SpawnDragon", "SpawnLavaTrinketChest"], p))
     set_rule(multiworld.get_location("37_HugShopkeeper", p), lambda state: state.has_all(["SpawnShopkeeper", "SpawnMrHugsChest"], p))
