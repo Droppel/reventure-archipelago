@@ -25,7 +25,7 @@ class RequireFailableJumps(Toggle):
     default = 0
 
 class RequireHardCombat(Toggle):
-    """This includes jumps in logic that are difficult and result in death if missed"""
+    """This adds ending 49 into logic without shield"""
     display_name = "RequireHardCombat"
     option_true = 1
     option_false = 0
