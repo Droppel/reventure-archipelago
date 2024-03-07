@@ -217,12 +217,11 @@ def set_rules(options: PerGameCommonOptions, multiworld: MultiWorld, p: int):
     set_rule(multiworld.get_location("98_FeedTheMimic", p), lambda state: state._reventure_has_burger(p) and state.has("SpawnMimic", p)
              and (state.has_any(["SpawnHookChest", "UnlockElevatorButton", "UnlockCallElevatorButtons"], p) or state.has_all(["GrowVine", "UnlockMirrorPortal"], p)))
     set_rule(multiworld.get_location("99_FeedTheKing", p), lambda state: state._reventure_has_burger(p) and state.has("SpawnKing", p))
-    if options.gems == 0:
+    if options.randomizeGems: # Randmoized Gems
+        requiredAmount = (options.gemsInPool * options.gemsRequired) // 100
+        set_rule(multiworld.get_location("100_UltimateEnding", p), lambda state: state._reventure_has_endings(p, options.endings-1) and state.has("Gem", p, requiredAmount))
+    else: #Vanilla Gems
         set_rule(multiworld.get_location("100_UltimateEnding", p), lambda state: state._reventure_has_endings(p, options.endings-1) and state.has_all(["SpawnShovelChest", "SpawnHookChest"], p) and state._reventure_has_weight(p, 4))
-    elif options.gems == 1:
-        set_rule(multiworld.get_location("100_UltimateEnding", p), lambda state: state._reventure_has_endings(p, options.endings-1) and state.has_all(["EarthGem", "WaterGem", "FireGem", "WindGem"], p))
-    elif options.gems == 2:
-        set_rule(multiworld.get_location("100_UltimateEnding", p), lambda state: state._reventure_has_endings(p, options.endings-1))
 
     multiworld.completion_condition[p] = lambda state: state.has("Victory", p)
 
