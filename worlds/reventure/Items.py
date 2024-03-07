@@ -71,11 +71,8 @@ item_table: Dict[str, ItemData] = {
     'SpawnDolphins': ItemData(reventureOffset+49, False),
     'SpawnMimicPet': ItemData(reventureOffset+50, False),
 
-    #Milestones
-    'EarthGem': ItemData(reventureOffset+51, True, gem=True),
-    'FireGem': ItemData(reventureOffset+52, True, gem=True),
-    'WaterGem': ItemData(reventureOffset+53, True, gem=True),
-    'WindGem': ItemData(reventureOffset+54, True, gem=True),
+    #Gem
+    'Gem': ItemData(reventureOffset+51, True, gem=True),
 
     #Ending
     'Victory': ItemData(None, True, True),

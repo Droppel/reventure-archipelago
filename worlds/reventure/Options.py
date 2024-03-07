@@ -2,13 +2,26 @@ import typing
 from Options import Option, Range, Choice, Toggle
 
 
-class GemSettings(Choice):
-    """How the 4 Gems are handled."""
+class RandomizeGems(Toggle):
+    """If the gem unlocks should be randomized"""
     display_name = "Gems"
-    option_vanilla = 0
-    option_randomized = 1
-    option_free = 2
+    option_true = 1
+    option_false = 0
     default = 1
+
+class GemsInPool(Range):
+    """How many Gems are in the pool"""
+    display_name = "Gems in Pool"
+    range_start = 0
+    range_end = 40
+    default = 4
+
+class GemsRequired(Range):
+    """What percentage of available gems (rounded down) is required to open the door"""
+    display_name = "Gems Required"
+    range_start = 0
+    range_end = 100
+    default = 4
 
 class RequiredEndings(Range):
     """How many endings are required to be completed to win the game."""
@@ -49,7 +62,9 @@ class RequireHardCombat(Toggle):
 
 reventure_options: typing.Dict[str, type(Option)] = {
     "endings": RequiredEndings,
-    "gems": GemSettings,
+    "randomizeGems": RandomizeGems,
+    "gemsInPool": GemsInPool,
+    "gemsRequired": GemsRequired,
     "hardjumps": RequireFailableJumps,
     "hardcombat": RequireHardCombat,
 }

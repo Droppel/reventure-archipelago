@@ -41,7 +41,7 @@ class ReventureWorld(World):
         pool = []
         total_location_count = len(self.multiworld.get_unfilled_locations(self.player)) - len(event_item_pairs)
         for name, data in item_table.items():
-            if data.event or (self.options.gems != 1 and data.gem):
+            if data.event or data.gem: # Skip Events and Gem
                 continue
             item = ReventureItem(name, self.player)
             pool.append(item)
@@ -51,8 +51,15 @@ class ReventureWorld(World):
         pool.append(self.create_item("GrowChicken"))
         pool.append(self.create_item("GrowChicken"))
 
+        # Handle Gems
+        if (self.options.randomizeGems):
+            for _ in range(0, self.options.gemsInPool):
+                pool.append(self.create_item("Gem"))
+
+        # Fill pool with filler items
         for _ in range(0, total_location_count - len(pool)):
             pool.append(self.create_item(self.get_filler_item_name()))
+
         self.multiworld.itempool += pool
 
         # Final Goal Event
