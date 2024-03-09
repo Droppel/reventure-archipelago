@@ -119,7 +119,8 @@ def set_rules(options: PerGameCommonOptions, multiworld: MultiWorld, p: int):
     set_rule(multiworld.get_location("14_RoastedByDragon", p), lambda state: state.has("SpawnDragon", p))
     set_rule(multiworld.get_location("15_KilledByDarkArenaMinion", p), lambda state: True)
     set_rule(multiworld.get_location("16_StabDragon", p), lambda state: state._reventure_has_sword(p) and state.has("SpawnDragon", p))
-    set_rule(multiworld.get_location("17_FaultyCannonShot", p), lambda state: state.has_any(["UnlockShopCannon", "UnlockCastleToShopCannon", "UnlockDarkCastleCannon"], p))
+    set_rule(multiworld.get_location("17_FaultyCannonShot", p), lambda state: 
+             state.has_any(["UnlockShopCannon", "UnlockCastleToShopCannon", "UnlockDarkCastleCannon", "UnlockCastleToDarkCastleCannon"], p))
     set_rule(multiworld.get_location("18_HugTheKing", p), lambda state: state.has_all(["SpawnMrHugsChest", "SpawnKing"], p))
     set_rule(multiworld.get_location("19_HugGuard", p), lambda state: state.has("SpawnMrHugsChest", p))
     set_rule(multiworld.get_location("20_TakeTheDayOff", p), lambda state: True)
