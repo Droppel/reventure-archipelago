@@ -4,8 +4,6 @@ from worlds.AutoWorld import LogicMixin
 from worlds.generic.Rules import set_rule
 
 class ReventureLogic(LogicMixin):
-    recursionTracker = 0
-
     def _reventure_has_burger(self, player: int) -> bool:
         return self.has("SpawnBurgerChest", player) and self.has("DarkstoneLeverMiddle", player)
     

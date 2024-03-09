@@ -1,11 +1,11 @@
 import string
 
 from BaseClasses import Entrance, Item, ItemClassification, Location, MultiWorld, Region, Tutorial
-from .Items import item_table, event_item_pairs
-from .Locations import location_table
-from .Options import reventure_options
-from .Regions import create_regions
-from .Rules import set_rules
+from .items import item_table, event_item_pairs
+from .locations import location_table
+from .options import reventure_options
+from .regions import create_regions
+from .rules import set_rules
 from worlds.AutoWorld import WebWorld, World
 
 
@@ -85,30 +85,6 @@ class ReventureWorld(World):
 
     def get_filler_item_name(self) -> str:
         return "Nothing"
-
-
-def create_region(world: MultiWorld, player: int, name: str, locations=None, exits=None):
-    ret = Region(name, player, world)
-    if locations:
-        for location in locations:
-            loc_id = location_table.get(location, 0)
-            location = ReventureLocation(player, location, loc_id, ret)
-            ret.locations.append(location)
-    if exits:
-        for exit in exits:
-            ret.exits.append(Entrance(player, exit, ret))
-
-    return ret
-
-
-class ReventureLocation(Location):
-    game: str = "Reventure"
-
-    def __init__(self, player: int, name: str, address=None, parent=None):
-        super(ReventureLocation, self).__init__(player, name, address, parent)
-        if address is None:
-            self.event = True
-            self.locked = True
 
 
 class ReventureItem(Item):
