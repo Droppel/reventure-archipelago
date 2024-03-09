@@ -26,7 +26,7 @@ class GemsRequired(Range):
 class RequiredEndings(Range):
     """How many endings are required to be completed to win the game."""
     display_name = "Endings"
-    range_start = 1
+    range_start = 0
     range_end = 99
     default = 40
 
