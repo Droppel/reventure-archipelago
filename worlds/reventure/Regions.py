@@ -1,5 +1,4 @@
 from BaseClasses import Entrance, Location, MultiWorld, Region
-from . import create_region
 from .locations import location_table
 
 def create_regions(world: MultiWorld, player: int):

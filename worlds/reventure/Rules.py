@@ -47,8 +47,9 @@ class ReventureLogic(LogicMixin):
     
     def _reventure_has_items(self, player: int, req: int) -> bool:
         items = 0
-        valid_items = ["SpawnHookChest", "SpawnBombsChest", "SpawnShieldChest", "SpawnShovelChest", "SpawnLavaTrinketChest",
-            "SpawnWhistleChest", "SpawnBoomerang", "SpawnMrHugsChest", "SpawnMapChest", "SpawnCompassChest"]
+        valid_items = ["SpawnHookChest", "SpawnBombsChest", "SpawnShieldChest", "SpawnShovelChest",
+                       "SpawnLavaTrinketChest", "SpawnWhistleChest", "SpawnBoomerang", "SpawnMrHugsChest", 
+                       "SpawnMapChest", "SpawnCompassChest"]
         for item in valid_items:
             if self.has(item, player):
                 items += 1
@@ -88,8 +89,10 @@ class ReventureLogic(LogicMixin):
             return False
 
     def _reventure_can_reach_princessportal_with_item(self, player: int) -> bool:
-        return (self.has("UnlockMirrorPortal", player) and (self.has("GrowVine", player) or (self._reventure_has_chicken(player)
-                and (self._reventure_has_sword(player) or self.has_any(["SpawnHookChest", "UnlockGeyserWaterfall"], player)))))
+        return (self.has("UnlockMirrorPortal", player) and (self.has("GrowVine", player)
+                or (self._reventure_has_chicken(player)
+                and (self._reventure_has_sword(player) 
+                or self.has_any(["SpawnHookChest", "UnlockGeyserWaterfall"], player)))))
 
     def _reventure_can_pass_castle_with_item(self, p: int) -> bool:
         return (self._reventure_has_sword(p) or (self._reventure_has_chicken(p) and self.has("BuildStatue", p))
@@ -201,7 +204,7 @@ def set_rules(options: PerGameCommonOptions, multiworld: MultiWorld, p: int):
     set_rule(multiworld.get_location("86_MakeBabiesWithPrincess", p), lambda state: state._reventure_has_sword(p) and state._reventure_can_reach_princess_with_item(p))
     set_rule(multiworld.get_location("87_KillAllDevsHell", p), lambda state: state._reventure_can_reach_princess_with_item(p)
              and ((state._reventure_has_sword(p) and (state.has("SpawnHookChest", p) or (state._reventure_has_chicken(p) and state.has("SpawnShovelChest", p)))) 
-                  or (state.has("SpawnBoomerang", p) and state.has_any(["SpawnHookChest", "SpawnShovelChest"], p))))
+             or (state.has("SpawnBoomerang", p) and state.has_any(["SpawnHookChest", "SpawnShovelChest"], p))))
     set_rule(multiworld.get_location("88_DesertEnd", p), lambda state: state._reventure_has_weight(p, 4) and state.has_all(["SpawnHookChest", "UnlockGeyserDesert2"], p))
     set_rule(multiworld.get_location("89_FindAlienLarvae", p), lambda state: state.has("SpawnPrincessItem", p) or (state.has("SpawnShovelChest", p)
              and (state.has("SpawnLavaTrinketChest", p) or options.hardjumps == 1)))
@@ -217,7 +220,7 @@ def set_rules(options: PerGameCommonOptions, multiworld: MultiWorld, p: int):
     set_rule(multiworld.get_location("98_FeedTheMimic", p), lambda state: state._reventure_has_burger(p) and state.has("SpawnMimic", p)
              and (state.has_any(["SpawnHookChest", "UnlockElevatorButton", "UnlockCallElevatorButtons"], p) or state.has_all(["GrowVine", "UnlockMirrorPortal"], p)))
     set_rule(multiworld.get_location("99_FeedTheKing", p), lambda state: state._reventure_has_burger(p) and state.has("SpawnKing", p))
-    if options.randomizeGems: # Randmoized Gems
+    if options.randomizeGems: # Randomized Gems
         requiredAmount = (options.gemsInPool * options.gemsRequired) // 100
         set_rule(multiworld.get_location("100_UltimateEnding", p), lambda state: state._reventure_has_endings(p, options.endings-1) and state.has("Gem", p, requiredAmount))
     else: #Vanilla Gems
