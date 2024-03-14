@@ -152,11 +152,16 @@ def set_rules(options: PerGameCommonOptions, multiworld: MultiWorld, p: int):
     set_rule(multiworld.get_location("45_TakePrincessToBed", p), lambda state: state.has("SpawnPrincessItem", p))
     set_rule(multiworld.get_location("46_JumpOffTheCliff", p), lambda state: True)
     set_rule(multiworld.get_location("47_HarakiriSuicide", p), lambda state: state._reventure_has_sword(p))
-    set_rule(multiworld.get_location("48_SelfDestructFortress", p), lambda state: options.hardjumps == 1 or state.has("SpawnHookChest", p)
+    if (options.hardjumps == 1):
+        set_rule(multiworld.get_location("48_SelfDestructFortress", p), lambda state: True)
+    else:
+        set_rule(multiworld.get_location("48_SelfDestructFortress", p), lambda state: state.has("SpawnHookChest", p)
              or (state._reventure_can_pass_castle_with_item(p) and state._reventure_has_chicken(p)))
-    # (sh and sw) or ()
-    set_rule(multiworld.get_location("49_HundredMinionsMassacre", p), lambda state: state._reventure_has_sword(p)
-             and (options.hardcombat == 0 or state.has("SpawnShieldChest", p)))
+    if (options.hardcombat == 1):
+        set_rule(multiworld.get_location("49_HundredMinionsMassacre", p), lambda state: state._reventure_has_sword(p))
+    else:
+        set_rule(multiworld.get_location("49_HundredMinionsMassacre", p), lambda state: state._reventure_has_sword(p)
+             and state.has("SpawnShieldChest", p))
     set_rule(multiworld.get_location("50_KilledByDarkLord", p), lambda state: state.has("SpawnPrincessItem", p))
     set_rule(multiworld.get_location("51_TakePrincessBackToTown", p), lambda state: state.has("SpawnPrincessItem", p))
     set_rule(multiworld.get_location("52_ShootPrincessToTown", p), lambda state: state.has_all(["SpawnPrincessItem", "UnlockDarkCastleCannon"], p))
@@ -185,8 +190,15 @@ def set_rules(options: PerGameCommonOptions, multiworld: MultiWorld, p: int):
     set_rule(multiworld.get_location("70_TriggerTrollSpikes", p), lambda state: True)
     set_rule(multiworld.get_location("72_SacrificePrincess", p), lambda state: state.has("SpawnPrincessItem", p))
     set_rule(multiworld.get_location("73_HugDarkLord", p), lambda state: state.has_all(["SpawnMrHugsChest", "SpawnPrincessItem"], p))
-    set_rule(multiworld.get_location("74_ShotgunFakePrincess", p), lambda state: state._reventure_has_sword(p)
-             and state.has_all(["SpawnShopkeeper", "SpawnMimic", "UnlockShopCannon"], p) and state.has_any(["UnlockCallElevatorButtons", "UnlockElevatorButton"], p))
+    if (options.hardjumps == 1 or options.hardcombat == 1):    
+        set_rule(multiworld.get_location("74_ShotgunFakePrincess", p), lambda state: state._reventure_has_sword(p)
+             and state.has_all(["SpawnShopkeeper", "SpawnMimic", "UnlockShopCannon"], p)
+             and state.has_any(["UnlockCallElevatorButtons", "UnlockElevatorButton"], p))
+    else:    
+        set_rule(multiworld.get_location("74_ShotgunFakePrincess", p), lambda state: state._reventure_has_sword(p)
+             and state.has_all(["SpawnShopkeeper", "SpawnMimic", "UnlockShopCannon"], p)
+             and state.has_any(["UnlockCallElevatorButtons", "UnlockElevatorButton"], p)
+             and state.has_any(["SpawnBombsChest", "SpawnShovelChest"], p))
     set_rule(multiworld.get_location("75_FakePrincessInsideChest", p), lambda state: state.has("SpawnPrincessItem", p))
     set_rule(multiworld.get_location("76_TakePrincessToDarkAltar", p), lambda state: state.has("SpawnPrincessItem", p))
     set_rule(multiworld.get_location("77_GetIntoTheCloud", p), lambda state: state.has("GrowVine", p) or (state._reventure_has_chicken(p) and (state._reventure_has_sword(p)
@@ -206,8 +218,10 @@ def set_rules(options: PerGameCommonOptions, multiworld: MultiWorld, p: int):
              and ((state._reventure_has_sword(p) and (state.has("SpawnHookChest", p) or (state._reventure_has_chicken(p) and state.has("SpawnShovelChest", p)))) 
              or (state.has("SpawnBoomerang", p) and state.has_any(["SpawnHookChest", "SpawnShovelChest"], p))))
     set_rule(multiworld.get_location("88_DesertEnd", p), lambda state: state._reventure_has_weight(p, 4) and state.has_all(["SpawnHookChest", "UnlockGeyserDesert2"], p))
-    set_rule(multiworld.get_location("89_FindAlienLarvae", p), lambda state: state.has("SpawnPrincessItem", p) or (state.has("SpawnShovelChest", p)
-             and (state.has("SpawnLavaTrinketChest", p) or options.hardjumps == 1)))
+    if (options.hardjumps == 1):
+        set_rule(multiworld.get_location("89_FindAlienLarvae", p), lambda state: state.has("SpawnPrincessItem", p) or (state.has("SpawnShovelChest", p)))
+    else:
+        set_rule(multiworld.get_location("89_FindAlienLarvae", p), lambda state: state.has("SpawnPrincessItem", p) or (state.has_all(["SpawnShovelChest", "SpawnLavaTrinketChest"], p)))
     set_rule(multiworld.get_location("90_FaceDarkLordWithShield", p), lambda state: state.has("SpawnShieldChest", p) and state._reventure_can_reach_princess_with_item(p)
              and state._reventure_can_pass_castle_with_item(p))
     set_rule(multiworld.get_location("91_MultipleDesertJumps", p), lambda state: state._reventure_has_weight(p, 4) and state.has("SpawnHookChest", p))
