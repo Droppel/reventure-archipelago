@@ -21,7 +21,7 @@ def set_rules(options: PerGameCommonOptions, multiworld: MultiWorld, p: int):
             if state.has("ProgressiveSword", p, 2):
                 return True
             elif state.has("ProgressiveSword", p, 1):
-                return state.has_any(["SpawnHookChest", "UnlockGeyserWaterfall"], p)
+                return state.has("SpawnShovelChest") and state.has_any(["SpawnHookChest", "UnlockGeyserWaterfall"], p)
             else:
                 return False
     else:
