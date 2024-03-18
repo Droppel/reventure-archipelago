@@ -223,7 +223,7 @@ def set_rules(options: PerGameCommonOptions, multiworld: MultiWorld, p: int):
              and can_pass_castle_with_item(state, p))
     set_rule(multiworld.get_location("85_KillAllFairies", p), lambda state: has_sword(state, p) or state.has("SpawnMrHugsChest", p)
              or state.has("SpawnBoomerang", p))
-    set_rule(multiworld.get_location("86_MakeBabiesWithPrincess", p), lambda state: has_sword(state, p) and can_reach_princess_with_item(state, p))
+    set_rule(multiworld.get_location("86_MakeBabiesWithPrincess", p), lambda state: has_sword(state, p) and state.has("SpawnPrincessItem", p))
     set_rule(multiworld.get_location("87_KillAllDevsHell", p), lambda state: can_reach_princess_with_item(state, p)
              and ((has_sword(state, p) and (state.has("SpawnHookChest", p) or (has_chicken(state, p) and state.has("SpawnShovelChest", p)))) 
              or (state.has("SpawnBoomerang", p) and state.has_any(["SpawnHookChest", "SpawnShovelChest"], p))))
