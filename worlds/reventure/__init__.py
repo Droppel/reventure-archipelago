@@ -41,18 +41,25 @@ class ReventureWorld(World):
         pool = []
         total_location_count = len(self.multiworld.get_unfilled_locations(self.player)) - len(event_item_pairs)
         for name, data in item_table.items():
-            if data.event or data.gem: # Skip Events and Gem
+            if data.event or data.special: # Skip Events and Special items
                 continue
             item = ReventureItem(name, self.player)
             pool.append(item)
 
-        # Add extra copies of grow chicken because it works progressive
+        # Add Chicken
+        pool.append(self.create_item("GrowChicken"))
         pool.append(self.create_item("GrowChicken"))
         pool.append(self.create_item("GrowChicken"))
         pool.append(self.create_item("GrowChicken"))
 
+        # Add Swords
+        pool.append(self.create_item("ProgressiveSword"))
+        pool.append(self.create_item("ProgressiveSword"))
+        if self.options.treasureSword:
+            pool.append(self.create_item("ProgressiveSword"))
+        
         # Handle Gems
-        if (self.options.randomizeGems):
+        if self.options.randomizeGems:
             for _ in range(0, self.options.gemsInPool):
                 pool.append(self.create_item("Gem"))
 
