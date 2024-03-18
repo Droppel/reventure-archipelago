@@ -44,21 +44,12 @@ class RequireHardCombat(Toggle):
     option_false = 0
     default = 0
 
-# class FinalAct(Toggle):
-#     """Whether you will need to collect the 3 keys and beat the final act to complete the game."""
-#     display_name = "Final Act"
-#     option_true = 1
-#     option_false = 0
-#     default = 0
-
-
-# class Downfall(Toggle):
-#     """When Downfall is Installed this will switch the played mode to Downfall"""
-#     display_name = "Downfall"
-#     option_true = 1
-#     option_false = 0
-#     default = 0
-
+class AddTreasureSword(Toggle):
+    """This adds the sword in the treasure room into the sword progression"""
+    display_name = "AddTreasureSword"
+    option_true = 1
+    option_false = 0
+    default = 0
 
 reventure_options: typing.Dict[str, type(Option)] = {
     "endings": RequiredEndings,
@@ -67,4 +58,5 @@ reventure_options: typing.Dict[str, type(Option)] = {
     "gemsRequired": GemsRequired,
     "hardjumps": RequireFailableJumps,
     "hardcombat": RequireHardCombat,
+    "treasureSword": AddTreasureSword,
 }

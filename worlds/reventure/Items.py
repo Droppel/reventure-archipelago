@@ -9,13 +9,14 @@ class ItemData(typing.NamedTuple):
     code: typing.Optional[int]
     progression: bool
     event: bool = False
-    gem: bool = False
+    special: bool = False
 
 item_table: Dict[str, ItemData] = {
-    #Item Locations
     'Nothing': ItemData(reventureOffset, False),
-    'SpawnSwordPedestalItem': ItemData(reventureOffset+1, True),
-    'SpawnSwordChest': ItemData(reventureOffset+2, True),
+    #Sword
+    'ProgressiveSword': ItemData(reventureOffset+1, True, special=True),
+    # UNUSED 'SpawnSwordChest': ItemData(reventureOffset+2, True),
+    #Item Locations
     'SpawnShovelChest': ItemData(reventureOffset+3, True),
     'SpawnBoomerang': ItemData(reventureOffset+4, True),
     'SpawnMapChest': ItemData(reventureOffset+5, True),
@@ -60,7 +61,7 @@ item_table: Dict[str, ItemData] = {
     'SpawnShopkeeper': ItemData(reventureOffset+40, True),
     'SpawnMimic': ItemData(reventureOffset+41, True),
     'SpawnKing': ItemData(reventureOffset+42, True),
-    'GrowChicken': ItemData(reventureOffset+43, True),
+    'GrowChicken': ItemData(reventureOffset+43, True, special=True),
     'SpawnElder': ItemData(reventureOffset+44, True),
     'SpawnBoulderNPC': ItemData(reventureOffset+45, True),
     
@@ -72,7 +73,7 @@ item_table: Dict[str, ItemData] = {
     'SpawnMimicPet': ItemData(reventureOffset+50, False),
 
     #Gem
-    'Gem': ItemData(reventureOffset+51, True, gem=True),
+    'Gem': ItemData(reventureOffset+51, True, special=True),
 
     #Ending
     'Victory': ItemData(None, True, True),
