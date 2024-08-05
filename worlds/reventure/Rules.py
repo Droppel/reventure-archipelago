@@ -184,7 +184,11 @@ def set_rules(options: PerGameCommonOptions, multiworld: MultiWorld, p: int):
     set_rule(multiworld.get_location("58_JumpOffTheBalcony", p), lambda state: True)
     set_rule(multiworld.get_location("59_StayAfk", p), lambda state: True)
     set_rule(multiworld.get_location("60_PlaceBombUnderCastle", p), lambda state: state.has("SpawnBombsChest", p))
-    set_rule(multiworld.get_location("61_DontKillMinions", p), lambda state: True)
+    if options.hardjumps:
+        set_rule(multiworld.get_location("61_DontKillMinions", p), lambda state: True)
+    else:
+        set_rule(multiworld.get_location("61_DontKillMinions", p), lambda state: state.has("SpawnHookChest", p)
+             or (can_pass_castle_with_item(state, p) and has_chicken(state, p)))
     set_rule(multiworld.get_location("62_FindTreasure", p), lambda state: state.has("SpawnShovelChest", p) and (has_sword(state, p)
              or state.has_any(["SpawnHookChest", "UnlockGeyserWaterfall"], p)))
     set_rule(multiworld.get_location("63_KillChicken", p), lambda state: has_sword(state, p) and has_chicken(state, p))
@@ -192,7 +196,10 @@ def set_rules(options: PerGameCommonOptions, multiworld: MultiWorld, p: int):
     set_rule(multiworld.get_location("65_OverhealByFairies", p), lambda state: True)
     set_rule(multiworld.get_location("66_DarkStoneToAltar", p), lambda state: has_darkstone(state, p))
     set_rule(multiworld.get_location("67_CrushedAtUltimateDoor", p), lambda state: True)
-    set_rule(multiworld.get_location("68_DarkLordComicStash", p), lambda state: True)
+    if options.hardjumps:
+        set_rule(multiworld.get_location("68_DarkLordComicStash", p), lambda state: True)
+    else:
+        set_rule(multiworld.get_location("68_DarkLordComicStash", p), lambda state: state.has("SpawnPrincessItem", p))
     set_rule(multiworld.get_location("69_StabDarkLord", p), lambda state: has_sword(state, p) and can_reach_princess_with_item(state, p))
     set_rule(multiworld.get_location("71_SacrificeEveryItem", p), lambda state: has_items(state, p, 6) and (has_sword(state, p)
              or state.has_all(["SpawnShovelChest", "UnlockGeyserWaterfall"], p) or (state.has("SpawnBombsChest", p)
