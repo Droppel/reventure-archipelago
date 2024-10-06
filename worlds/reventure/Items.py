@@ -10,9 +10,12 @@ class ItemData(typing.NamedTuple):
     progression: bool
     event: bool = False
     special: bool = False
+    filler: bool = False
+
+filler_items = [ 'Change Hero Name', 'Change Princess Name', 'Change Dark Lord Name' ]
 
 item_table: Dict[str, ItemData] = {
-    'Nothing': ItemData(reventureOffset, False),
+    'Nothing': ItemData(reventureOffset, False, special=True),
     #Sword
     'Progressive Sword': ItemData(reventureOffset+1, True, special=True),
     # UNUSED 'SpawnSwordChest': ItemData(reventureOffset+2, True),
@@ -40,7 +43,7 @@ item_table: Dict[str, ItemData] = {
     'Castle To Shop Cannon': ItemData(reventureOffset+21, True),
     'Dark Fortress Cannon': ItemData(reventureOffset+22, True),
     'Castle To Dark Fortress Cannon': ItemData(reventureOffset+23, True),
-    'Desert Geyser East': ItemData(reventureOffset+24, True),
+    'Desert Geyser East': ItemData(reventureOffset+24, False),
     'Desert Geyser West': ItemData(reventureOffset+25, True),
     'Volcano Geyser': ItemData(reventureOffset+26, True), 
     'Waterfall Geyser': ItemData(reventureOffset+27, True),
@@ -74,6 +77,11 @@ item_table: Dict[str, ItemData] = {
 
     #Gem
     'Gem': ItemData(reventureOffset+51, True, special=True),
+
+    # Fillers
+    'Change Hero Name': ItemData(reventureOffset+52, False, filler=True),
+    'Change Princess Name': ItemData(reventureOffset+53, False, filler=True),
+    'Change Dark Lord Name': ItemData(reventureOffset+54, False, filler=True),
 
     #Ending
     'Victory': ItemData(None, True, True),
