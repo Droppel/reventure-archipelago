@@ -1,7 +1,8 @@
+from random import choice
 import string
 
 from BaseClasses import Entrance, Item, ItemClassification, Location, MultiWorld, Region, Tutorial
-from .items import item_table, event_item_pairs
+from .items import item_table, event_item_pairs, filler_items
 from .locations import location_table
 from .options import reventure_options
 from .regions import create_regions
@@ -41,22 +42,22 @@ class ReventureWorld(World):
         pool = []
         total_location_count = len(self.multiworld.get_unfilled_locations(self.player)) - len(event_item_pairs)
         for name, data in item_table.items():
-            if data.event or data.special: # Skip Events and Special items
+            if data.event or data.special or data.filler: # Skip Events, Special items and Filler items
                 continue
             item = ReventureItem(name, self.player)
             pool.append(item)
 
         # Add Chicken
-        pool.append(self.create_item("GrowChicken"))
-        pool.append(self.create_item("GrowChicken"))
-        pool.append(self.create_item("GrowChicken"))
-        pool.append(self.create_item("GrowChicken"))
+        pool.append(self.create_item("Chicken"))
+        pool.append(self.create_item("Chicken"))
+        pool.append(self.create_item("Chicken"))
+        pool.append(self.create_item("Chicken"))
 
         # Add Swords
-        pool.append(self.create_item("ProgressiveSword"))
-        pool.append(self.create_item("ProgressiveSword"))
+        pool.append(self.create_item("Progressive Sword"))
+        pool.append(self.create_item("Progressive Sword"))
         if self.options.treasureSword:
-            pool.append(self.create_item("ProgressiveSword"))
+            pool.append(self.create_item("Progressive Sword"))
         
         # Handle Gems
         if self.options.randomizeGems:
@@ -91,7 +92,7 @@ class ReventureWorld(World):
         return slot_data
 
     def get_filler_item_name(self) -> str:
-        return "Nothing"
+        return choice(filler_items)
 
 
 class ReventureItem(Item):
