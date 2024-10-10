@@ -81,7 +81,7 @@ def set_rules(options: PerGameCommonOptions, multiworld: MultiWorld, p: int):
             locations = state.multiworld.get_locations(player)
             invreq = 100 - req
             for loc in locations:
-                if loc.name == "100_UltimateEnding":
+                if loc.name == "100: The End":
                     continue
                 count += not loc.can_reach(state)
                 if count >= invreq:
@@ -92,7 +92,7 @@ def set_rules(options: PerGameCommonOptions, multiworld: MultiWorld, p: int):
             count = 0
             locations = state.multiworld.get_locations(player)
             for loc in locations:
-                if loc.name == "100_UltimateEnding":
+                if loc.name == "100: The End":
                     continue
                 count += loc.can_reach(state)
                 if count >= req:
