@@ -1,13 +1,14 @@
+import copy
 from random import choice
 import string
 
-from BaseClasses import Entrance, Item, ItemClassification, Location, MultiWorld, Region, Tutorial
-from .items import item_table, event_item_pairs, filler_items
-from .locations import location_table
-from .options import reventure_options
-from .regions import create_regions
-from .rules import set_rules
-from worlds.AutoWorld import WebWorld, World
+from BaseClasses import CollectionState, Item, ItemClassification, MultiWorld, Tutorial
+from .Items import item_table, event_item_pairs, filler_items
+from .Locations import location_table
+from .Options import reventure_options
+from .Regions import create_regions
+from .Rules import set_rules
+from worlds.AutoWorld import AutoLogicRegister, WebWorld, World
 
 
 class ReventureWeb(WebWorld):
@@ -87,7 +88,7 @@ class ReventureWorld(World):
     def fill_slot_data(self) -> dict:
         slot_data = {}
         for option_name in reventure_options:
-            option = getattr(self.multiworld, option_name)[self.player]
+            option = getattr(self.options, option_name)
             slot_data[option_name] = option.value
         return slot_data
 
