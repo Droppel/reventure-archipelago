@@ -168,7 +168,7 @@ def set_rules(options: PerGameCommonOptions, multiworld: MultiWorld, p: int):
         set_rule(multiworld.get_location("48: It\'s my First Day", p), lambda state: state.has("Hook", p)
              or (can_pass_castle_with_item(state, p) and has_chicken(state, p)))
     if options.hardcombat:
-        set_rule(multiworld.get_location("49_HundredMinionsMassacre", p), lambda state: has_sword(state, p))
+        set_rule(multiworld.get_location("49: Victory Royale", p), lambda state: has_sword(state, p))
     else:
         set_rule(multiworld.get_location("49: Victory Royale", p), lambda state: has_sword(state, p)
              and state.has("Shield", p))
