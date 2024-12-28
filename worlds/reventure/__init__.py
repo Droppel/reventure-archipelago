@@ -9,6 +9,7 @@ from .Options import reventure_options
 from .Regions import create_regions
 from .Rules import set_rules
 from worlds.AutoWorld import AutoLogicRegister, WebWorld, World
+from .CustomRegionsTest import ReventureGraph
 
 
 class ReventureWeb(WebWorld):
@@ -38,6 +39,8 @@ class ReventureWorld(World):
     item_name_to_id = {name: data.code for name, data in item_table.items()}
     location_name_to_id = location_table
 
+    region_graph: ReventureGraph
+
     def create_items(self):
         # Fill out our pool with our items from item_pool, assuming 1 item if not present in item_pool
         pool = []
@@ -55,10 +58,10 @@ class ReventureWorld(World):
         pool.append(self.create_item("Chicken"))
 
         # Add Swords
-        pool.append(self.create_item("Progressive Sword"))
-        pool.append(self.create_item("Progressive Sword"))
-        if self.options.treasureSword:
-            pool.append(self.create_item("Progressive Sword"))
+        # pool.append(self.create_item("Progressive Sword"))
+        # pool.append(self.create_item("Progressive Sword"))
+        # if self.options.treasureSword:
+        #     pool.append(self.create_item("Progressive Sword"))
         
         # Handle Gems
         if self.options.randomizeGems:
@@ -83,7 +86,7 @@ class ReventureWorld(World):
         return ReventureItem(name, self.player)
 
     def create_regions(self):
-        create_regions(self.multiworld, self.player)
+        self.region_graph = create_regions(self.multiworld, self.player)
 
     def fill_slot_data(self) -> dict:
         slot_data = {}

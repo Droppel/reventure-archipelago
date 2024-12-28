@@ -675,6 +675,7 @@ def create_region_graph():
     loc97 = BaseRegion("97: Swimming Into the Sunset")
     loc98 = BaseRegion("98: Suspension Points")
     loc99 = BaseRegion("99: Delivery Boy")
+    loc100 = BaseRegion("100: The End")
 
     # Create regions
     menu = BaseRegion("Menu")
@@ -757,7 +758,7 @@ def create_region_graph():
     lonksHouse.add_connection(BaseConnection(fairyFountain, lambda state: True, ["Fairy Portal"]))
     lonksHouse.add_statechange(StateChange(["has_sword"], [True],
                                            lambda state: not state.event("has_sword") and state.get_jump() >= 2,
-                                           ["Sword"]))
+                                           ["Sword Chest"]))
     lonksHouse.add_location(BaseConnection(loc02, lambda state: True,
                                             ["Faceplant Stone"]))
     lonksHouse.add_location(BaseConnection(loc03, lambda state: True))
@@ -771,7 +772,7 @@ def create_region_graph():
     elder.add_connection(BaseConnection(volcanoTopExit, lambda state: state.get_jump() >= 2))
     elder.add_statechange(StateChange(["has_sword"], [True],
                                       lambda state: not state.event("has_sword"),
-                                      ["Sword"]))
+                                      ["Sword Pedestal"]))
     elder.add_location(BaseConnection(loc01, lambda state: state.event("has_sword"),
                                       ["Elder"]))
     elder.add_location(BaseConnection(loc40, lambda state: state.event("has_mrhugs"),
@@ -833,7 +834,7 @@ def create_region_graph():
     princessRoom.add_connection(BaseConnection(anvil, lambda state: True, ["Mirror Portal"]))
     princessRoom.add_statechange(StateChange(["has_mrhugs"], [True],
                                            lambda state: not state.event("has_mrhugs"),
-                                           ["Mrhugs"]))
+                                           ["Misterr Hugs"]))
     princessRoom.add_location(BaseConnection(loc04, lambda state: state.event("has_sword")))
     princessRoom.add_location(BaseConnection(loc11, lambda state: state.event("has_mrhugs")))
     princessRoom.add_location(BaseConnection(loc19, lambda state: state.event("has_mrhugs")))
@@ -846,7 +847,7 @@ def create_region_graph():
     lavaTrinket.add_connection(BaseConnection(volcanoBridge, lambda state: True))
     lavaTrinket.add_statechange(StateChange(["has_lavaTrinket"], [True],
                                        lambda state: not state.event("has_lavaTrinket"),
-                                       ["Lavatrinket"]))
+                                       ["Lava Trinket"]))
     
     volcanoDropStone.add_connection(BaseConnection(lavaTrinket, lambda state: state.get_jump() >= 2))
     volcanoDropStone.add_connection(BaseConnection(volcanoBridge, lambda state: state.get_jump() >= 2))
@@ -897,6 +898,7 @@ def create_region_graph():
 
     ultimateDoor.add_connection(BaseConnection(volcanoGeyser, lambda state: True))
     ultimateDoor.add_location(BaseConnection(loc67, lambda state: True))
+    ultimateDoor.add_location(BaseConnection(loc100, lambda state: True))
 
     castleMinions.add_connection(BaseConnection(castleFirstFloor, lambda state: state.event("castleBridgeDown")))
     castleMinions.add_connection(BaseConnection(secretPathMoatWell, lambda state: True))
@@ -915,59 +917,59 @@ def create_region_graph():
     belowCastleBridge.add_connection(BaseConnection(secretPathMoatWell, lambda state: state.get_jump() >= 3))
     belowCastleBridge.add_connection(BaseConnection(castleMoat, lambda state: True))
 
-    # secretPathMoatWell.add_connection(BaseConnection(belowCastleBridge, lambda state: True))
-    # secretPathMoatWell.add_connection(BaseConnection(castleMinions, lambda state: state.get_jump() >= 3))
-    # secretPathMoatWell.add_connection(BaseConnection(bomb, lambda state: state.get_jump() >= 2))
+    secretPathMoatWell.add_connection(BaseConnection(belowCastleBridge, lambda state: True))
+    secretPathMoatWell.add_connection(BaseConnection(castleMinions, lambda state: state.get_jump() >= 3))
+    secretPathMoatWell.add_connection(BaseConnection(bomb, lambda state: state.get_jump() >= 2))
 
-    # castleMoat.add_connection(BaseConnection(belowCastleBridge, lambda state: state.get_jump() >= 2))
-    # castleMoat.add_connection(BaseConnection(ultimateDoor, lambda state: state.event("has_shovel")))
-    # castleMoat.add_connection(BaseConnection(barn, lambda state: state.event("has_sword")))
-    # castleMoat.add_connection(BaseConnection(fishingBridge, lambda state: state.get_jump() >= 2 or state.event("has_sword")))
-    # castleMoat.add_location(BaseConnection(loc95, lambda state: True))
-    # castleMoat.add_location(BaseConnection(loc07, lambda state: True))
+    castleMoat.add_connection(BaseConnection(belowCastleBridge, lambda state: state.get_jump() >= 2))
+    castleMoat.add_connection(BaseConnection(ultimateDoor, lambda state: state.event("has_shovel")))
+    castleMoat.add_connection(BaseConnection(barn, lambda state: state.event("has_sword")))
+    castleMoat.add_connection(BaseConnection(fishingBridge, lambda state: state.get_jump() >= 2 or state.event("has_sword")))
+    castleMoat.add_location(BaseConnection(loc95, lambda state: True))
+    castleMoat.add_location(BaseConnection(loc07, lambda state: True))
 
-    # behindShopBush.add_connection(BaseConnection(volcanoDropStone, lambda state: True))
-    # behindShopBush.add_connection(BaseConnection(shopLake, lambda state: state.event("has_sword")))
+    behindShopBush.add_connection(BaseConnection(volcanoDropStone, lambda state: True))
+    behindShopBush.add_connection(BaseConnection(shopLake, lambda state: state.event("has_sword")))
 
-    # barn.add_location(BaseConnection(loc31, lambda state: state.event("has_sword") and state.get_jump() >= 2))
-    # barn.add_location(BaseConnection(loc86, lambda state: state.event("has_princess")))
+    barn.add_location(BaseConnection(loc31, lambda state: state.event("has_sword") and state.get_jump() >= 2))
+    barn.add_location(BaseConnection(loc86, lambda state: state.event("has_princess")))
 
-    # shop.add_connection(BaseConnection(shopLake, lambda state: True))
-    # shop.add_connection(BaseConnection(shopRoof, lambda state: state.get_jump() >= 2))
-    # shop.add_connection(BaseConnection(nukeStorage, lambda state: state.event("has_hook")))
-    # shop.add_connection(BaseConnection(shopCellar, lambda state: state.event("has_princess")))
-    # shop.add_connection(BaseConnection(fortressMoat, lambda state: True, ["Shop Cannon"]))
-    # shop.add_location(BaseConnection(loc09, lambda state: state.event("has_sword"), ["ShopKeeper"]))
-    # shop.add_location(BaseConnection(loc17, lambda state: True, ["Shop Cannon"]))
-    # shop.add_location(BaseConnection(loc27, lambda state: state.event("has_nuke"), ["Shop Cannon"]))
-    # shop.add_location(BaseConnection(loc37, lambda state: state.event("has_mrhugs"), ["ShopKeeper"]))
-    # shop.add_location(BaseConnection(loc95, lambda state: True))
+    shop.add_connection(BaseConnection(shopLake, lambda state: True))
+    shop.add_connection(BaseConnection(shopRoof, lambda state: state.get_jump() >= 2))
+    shop.add_connection(BaseConnection(nukeStorage, lambda state: state.event("has_hook")))
+    shop.add_connection(BaseConnection(shopCellar, lambda state: state.event("has_princess")))
+    shop.add_connection(BaseConnection(fortressMoat, lambda state: True, ["Shop Cannon"]))
+    shop.add_location(BaseConnection(loc09, lambda state: state.event("has_sword"), ["Shopkeeper"]))
+    shop.add_location(BaseConnection(loc17, lambda state: True, ["Shop Cannon"]))
+    shop.add_location(BaseConnection(loc27, lambda state: state.event("has_nuke"), ["Shop Cannon"]))
+    shop.add_location(BaseConnection(loc37, lambda state: state.event("has_mrhugs"), ["Shopkeeper"]))
+    shop.add_location(BaseConnection(loc95, lambda state: True))
 
-    # shopRoof.add_connection(BaseConnection(shop, lambda state: True))
-    # shopRoof.add_connection(BaseConnection(ocean, lambda state: state.get_jump() >= 3 or state.event("has_sword")))
-    # shopRoof.add_location(BaseConnection(loc03, lambda state: True))
-    # shopRoof.add_location(BaseConnection(loc13, lambda state: state.event("has_mrhugs")))
-    # shopRoof.add_location(BaseConnection(loc25, lambda state: state.event("has_sword")))
+    shopRoof.add_connection(BaseConnection(shop, lambda state: True))
+    shopRoof.add_connection(BaseConnection(ocean, lambda state: state.get_jump() >= 3 or state.event("has_sword")))
+    shopRoof.add_location(BaseConnection(loc03, lambda state: True))
+    shopRoof.add_location(BaseConnection(loc13, lambda state: state.event("has_mrhugs")))
+    shopRoof.add_location(BaseConnection(loc25, lambda state: state.event("has_sword")))
 
-    # shopLake.add_connection(BaseConnection(volcanoTopExit, lambda state: state.get_jump() >= 2))
-    # shopLake.add_connection(BaseConnection(behindShopBush, lambda state: state.event("has_sword")))
-    # shopLake.add_connection(BaseConnection(shop, lambda state: True))
+    shopLake.add_connection(BaseConnection(volcanoTopExit, lambda state: state.get_jump() >= 2))
+    shopLake.add_connection(BaseConnection(behindShopBush, lambda state: state.event("has_sword")))
+    shopLake.add_connection(BaseConnection(shop, lambda state: True))
 
-    # ocean.add_connection(BaseConnection(shopRoof, lambda state: True))
-    # ocean.add_location(BaseConnection(loc95, lambda state: True))
-    # ocean.add_location(BaseConnection(loc96, lambda state: True))
-    # ocean.add_location(BaseConnection(loc97, lambda state: True))
+    ocean.add_connection(BaseConnection(shopRoof, lambda state: True))
+    ocean.add_location(BaseConnection(loc95, lambda state: True))
+    ocean.add_location(BaseConnection(loc96, lambda state: True))
+    ocean.add_location(BaseConnection(loc97, lambda state: True))
 
-    # nukeStorage.add_connection(BaseConnection(shop, lambda state: True))
-    # nukeStorage.add_statechange(StateChange(["has_nuke"], [True],
-    #                                         lambda state: not state.event("has_nuke"),
-    #                                         ["Nuke"]))
+    nukeStorage.add_connection(BaseConnection(shop, lambda state: True))
+    nukeStorage.add_statechange(StateChange(["has_nuke"], [True],
+                                            lambda state: not state.event("has_nuke"),
+                                            ["Nuke"]))
 
-    # shopCellar.add_connection(BaseConnection(shop, lambda state: state.event("has_princess")))
-    # shopCellar.add_connection(BaseConnection(parasite, lambda state: True))
-    # shopCellar.add_location(BaseConnection(loc78, lambda state: True))
+    shopCellar.add_connection(BaseConnection(shop, lambda state: state.event("has_princess")))
+    shopCellar.add_connection(BaseConnection(parasite, lambda state: True))
+    shopCellar.add_location(BaseConnection(loc78, lambda state: True))
 
-    # parasite.add_location(BaseConnection(loc89, lambda state: True))
+    parasite.add_location(BaseConnection(loc89, lambda state: True))
 
     # hookArea.add_connection(BaseConnection(castleMinions, lambda state: state.event("has_hook")))
     # hookArea.add_statechange(StateChange(["has_hook"], [True],
@@ -1164,7 +1166,7 @@ def create_region_graph():
     # # rightOfFortress.add_connection(BaseConnection(desert, lambda state: state.get_jump() == 1))
     # rightOfFortress.add_location(BaseConnection(loc81, lambda state: state.event("has_princess")))
 
-    # desert.add_location(BaseConnection(loc91, lambda state: True))
+    desert.add_location(BaseConnection(loc91, lambda state: True))
 
     # Build full graph
     
