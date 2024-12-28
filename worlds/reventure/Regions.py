@@ -1,15 +1,38 @@
 from BaseClasses import Entrance, Location, MultiWorld, Region
-from .locations import location_table
+from .Locations import location_table
+from .CustomRegionsTest import create_region_graph
 
-def create_regions(world: MultiWorld, player: int):
+def create_regions(multiworld: MultiWorld, player: int):
+    region_graph = create_region_graph()
 
-    world.regions += [
-        create_region(world, player, 'Menu', None, ['Startbutton']),
-        create_region(world, player, 'Reventureworld', [location for location in location_table])
-    ]
+    allexits = []
+    for graph_region in region_graph.regiondict.values():
+        locations = None
+        if graph_region.location:
+            locations = [graph_region.name]
+        exits = [f"{graph_region.name}={" ".join(connection.apitems.apitems)}={connection.region.name}" for connection in graph_region.connections]
+        allexits += exits
+        region = create_region(multiworld, player, graph_region.name, locations, exits)
+        multiworld.regions.append(region)
 
-    # link up our region with the entrance we just made
-    world.get_entrance('Startbutton', player).connect(world.get_region('Reventureworld', player))
+    for exit in allexits:
+        (name, apitems, target) = exit.split('=')
+        region = multiworld.get_entrance(exit, player).connect(multiworld.get_region(target, player))
+
+    # Create special endings
+    # menuregion = multiworld.get_region('Menu', player)
+    # menuregion.locations.append(ReventureLocation(player, '100: The End',location_table.get('100: The End', 0), menuregion))
+    from Utils import visualize_regions
+    visualize_regions(multiworld.get_region("Menu", player), "my_world.puml", show_entrance_names=True)
+
+    # return region_graph
+    # multiworld.regions += [
+    #     create_region(multiworld, player, 'Menu', None, ['Startbutton']),
+    #     create_region(multiworld, player, 'Reventureworld', [location for location in location_table])
+    # ]
+
+    # # link up our region with the entrance we just made
+    # multiworld.get_entrance('Startbutton', player).connect(multiworld.get_region('Reventureworld', player))
 
 def create_region(world: MultiWorld, player: int, name: str, locations=None, exits=None):
     ret = Region(name, player, world)

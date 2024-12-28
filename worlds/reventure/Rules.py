@@ -2,8 +2,15 @@ from BaseClasses import CollectionState, MultiWorld
 from Options import PerGameCommonOptions
 from worlds.AutoWorld import LogicMixin
 from worlds.generic.Rules import set_rule
+from .CustomRegionsTest import ReventureGraph
 
 def set_rules(options: PerGameCommonOptions, multiworld: MultiWorld, p: int):
+    for entrance in multiworld.get_entrances(p):
+        reqitems = entrance.name.split("=")[1].split(" ")
+        set_rule(entrance, lambda state: all(state.has(item, p) for item in reqitems))
+    
+    return
+
     def has_burger(state: CollectionState, p: int) -> bool:
         return state.has("Burger", p) and state.has("Dark Stone Lever Middle", p)
     
