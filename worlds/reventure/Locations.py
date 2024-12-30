@@ -101,4 +101,9 @@ location_table = {
     '99: Delivery Boy': reventureEndingOffset+98,
     '71: Sustainable Development': reventureEndingOffset+99,
     '100: The End': None,
+    'Event Kill Juan': None,
+    'Event Kill Miguel': None,
+    'Event Kill Javi': None,
+    'Event Kill Alberto': None,
+    'Event Kill Daniel': None,
 }
