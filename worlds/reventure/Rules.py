@@ -1,14 +1,49 @@
 from BaseClasses import CollectionState, MultiWorld
 from Options import PerGameCommonOptions
-from worlds.AutoWorld import LogicMixin
 from worlds.generic.Rules import set_rule
-from .CustomRegionsTest import ReventureGraph
+import copy
 
 def set_rules(options: PerGameCommonOptions, multiworld: MultiWorld, p: int):
-    for entrance in multiworld.get_entrances(p):
-        reqitems = entrance.name.split("=")[1].split(" ")
-        set_rule(entrance, lambda state: all(state.has(item, p) for item in reqitems))
+    if options.endings-1 >= 50:
+        # Inverted because it's faster
+        def has_endings(state: CollectionState, player: int, req: int) -> bool:
+            count = 0
+            locations = state.multiworld.get_locations(player)
+            invreq = 100 - req
+            for loc in locations:
+                if loc.name == "100: The End":
+                    continue
+                count += not loc.can_reach(state)
+                if count >= invreq:
+                    return False
+            return True
+    else:
+        def has_endings(state: CollectionState, player: int, req: int) -> bool:
+            count = 0
+            locations = state.multiworld.get_locations(player)
+            for loc in locations:
+                if loc.name == "100: The End":
+                    continue
+                count += loc.can_reach(state)
+                if count >= req:
+                    return True
+            return False
     
+    for entrance in multiworld.get_entrances(p):
+        reqitems = entrance.name.split("=")[1].split(",")
+        if reqitems == ['']:
+            set_rule(entrance, lambda state: True)
+        else:
+            set_rule(entrance, lambda state, req=copy.copy(reqitems): all([state.has(item, p) for item in req]))
+    
+    # Extra location rules
+    # if options.randomizeGems: # Randomized Gems
+    requiredAmount = (options.gemsInPool * options.gemsRequired) // 100
+    set_rule(multiworld.get_location("100: The End", p), lambda state: has_endings(state, p, options.endings-1) and state.has("Gem", p, requiredAmount))
+    # else: #Vanilla Gems
+    #     set_rule(multiworld.get_location("100: The End", p), lambda state: has_endings(state, p, options.endings-1) and state.has_all(["Shovel", "Hook"], p) and has_weight(state, p, 4))
+
+    multiworld.completion_condition[p] = lambda state: state.has("Victory", p)
     return
 
     def has_burger(state: CollectionState, p: int) -> bool:
@@ -81,30 +116,6 @@ def set_rules(options: PerGameCommonOptions, multiworld: MultiWorld, p: int):
             items += 1
         return items >= req
     
-    if options.endings-1 >= 50:
-        # Inverted because it's faster
-        def has_endings(state: CollectionState, player: int, req: int) -> bool:
-            count = 0
-            locations = state.multiworld.get_locations(player)
-            invreq = 100 - req
-            for loc in locations:
-                if loc.name == "100: The End":
-                    continue
-                count += not loc.can_reach(state)
-                if count >= invreq:
-                    return False
-            return True
-    else:
-        def has_endings(state: CollectionState, player: int, req: int) -> bool:
-            count = 0
-            locations = state.multiworld.get_locations(player)
-            for loc in locations:
-                if loc.name == "100: The End":
-                    continue
-                count += loc.can_reach(state)
-                if count >= req:
-                    return True
-            return False
 
     def can_reach_princessportal_with_item(state: CollectionState, player: int) -> bool:
         return state.has("Mirror Portal", player) and (state.has("Vine", player)

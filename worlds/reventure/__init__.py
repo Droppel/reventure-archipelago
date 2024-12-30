@@ -9,7 +9,7 @@ from .Options import reventure_options
 from .Regions import create_regions
 from .Rules import set_rules
 from worlds.AutoWorld import AutoLogicRegister, WebWorld, World
-from .CustomRegionsTest import ReventureGraph
+from .CustomRegions import ReventureGraph
 
 
 class ReventureWeb(WebWorld):
@@ -74,13 +74,19 @@ class ReventureWorld(World):
 
         self.multiworld.itempool += pool
 
-        # Final Goal Event
+        # Place locked event items
         for event, item in event_item_pairs.items():
             event_item = ReventureItem(item, self.player)
             self.multiworld.get_location(event, self.player).place_locked_item(event_item)
 
     def set_rules(self):
         set_rules(self.options, self.multiworld, self.player)
+        
+        # from Utils import visualize_regions
+        # state = self.multiworld.get_all_state(False)
+        # state.prog_items[self.player]["Volcano Geyser"] -= 1
+        # state.update_reachable_regions(self.player)
+        # visualize_regions(self.multiworld.get_region("Menu", self.player), "my_world.puml", show_entrance_names=True, highlight_regions=state.reachable_regions[self.player])
 
     def create_item(self, name: str) -> Item:
         return ReventureItem(name, self.player)
@@ -93,6 +99,8 @@ class ReventureWorld(World):
         for option_name in reventure_options:
             option = getattr(self.options, option_name)
             slot_data[option_name] = option.value
+        
+        slot_data["spawn"] = self.region_graph.start_region.name
         return slot_data
 
     def get_filler_item_name(self) -> str:
