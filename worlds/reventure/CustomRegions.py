@@ -766,7 +766,6 @@ def create_region_graph():
     print(f"Start Region: {start_region.name}")
 
     menu.add_connection(BaseConnection(start_region, lambda state: True))
-    menu.add_location(BaseConnection(loc20, lambda state: True))
     menu.add_location(BaseConnection(loc59, lambda state: True))
 
     lonksHouse.add_connection(BaseConnection(elder, lambda state: state.get_jump() >= 2))
@@ -781,6 +780,7 @@ def create_region_graph():
     lonksHouse.add_location(BaseConnection(loc03, lambda state: True))
     lonksHouse.add_location(BaseConnection(loc04, lambda state: state.event("has_sword")))
     lonksHouse.add_location(BaseConnection(loc19, lambda state: state.event("has_mrhugs")))
+    lonksHouse.add_location(BaseConnection(loc20, lambda state: True))
     lonksHouse.add_location(BaseConnection(loc94, lambda state: state.event("has_princess")))
     
     elder.add_connection(BaseConnection(chicken, lambda state: state.get_jump() >= 2))
