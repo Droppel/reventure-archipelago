@@ -836,7 +836,6 @@ def create_region_graph():
                   anvil, princess, fireEscape, fortressTreasure, rightOfFortress]
 
     start_region = random.choice(allregions)
-    start_region = elevator
     print(f"Start Region: {start_region.name}")
 
     menu.add_connection(BaseConnection(start_region, lambda state: True))
