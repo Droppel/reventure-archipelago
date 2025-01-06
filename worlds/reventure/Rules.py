@@ -34,7 +34,8 @@ def set_rules(options: PerGameCommonOptions, multiworld: MultiWorld, p: int):
         if reqitems == ['']:
             set_rule(entrance, lambda state: True)
         else:
-            set_rule(entrance, lambda state, req=copy.copy(reqitems): all([state.has(item, p) for item in req]))
+            set_rule(entrance, lambda state, req=copy.copy(reqitems): all([
+                state.has("Jump Increase", p, int(item.split("_")[1])) if "Jump Increase_" in item else state.has(item, p) for item in req]))
     
     # Extra location rules
     # if options.randomizeGems: # Randomized Gems

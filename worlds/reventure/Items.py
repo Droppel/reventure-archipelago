@@ -58,6 +58,7 @@ item_table: Dict[str, ItemData] = {
     'Dark Stone Lever Left': ItemData(reventureOffset+36, True),
     'Dark Stone Lever Middle': ItemData(reventureOffset+37, True),
     'Dark Stone Lever Right': ItemData(reventureOffset+38, True),
+    'Jump Increase': ItemData(reventureOffset+55, True, special=True),
 
     #NPCs
     'Dragon': ItemData(reventureOffset+39, True),
