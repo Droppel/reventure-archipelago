@@ -57,6 +57,10 @@ class ReventureWorld(World):
         pool.append(self.create_item("Chicken"))
         pool.append(self.create_item("Chicken"))
 
+        # Add Jump increase
+        pool.append(self.create_item("Jump Increase"))
+        pool.append(self.create_item("Jump Increase"))
+
         # Add Swords
         # pool.append(self.create_item("Progressive Sword"))
         # pool.append(self.create_item("Progressive Sword"))

@@ -3,9 +3,12 @@ import typing
 import time
 import random
 
+totaljumpincrease = 2
+startjump = 3
+
 class APItems:
     def __init__(self):
-        self.apitems = []
+        self.apitems: typing.List[str] = []
     
     def add_apitem(self, item: str):
         if not item in self.apitems:
@@ -63,6 +66,7 @@ class ReventureState:
         self.state["has_chicken"] = False
         self.state["has_shovel"] = False
         self.state["has_sword"] = False
+        self.state["has_swordelder"] = False
         self.state["has_shield"] = False
         self.state["has_map"] = False
         self.state["has_compass"] = False
@@ -125,41 +129,52 @@ class ReventureState:
         if self.state["has_burger"]:
             items.append("has_burger")
         return items
-
-    def get_jump(self):
-        jump = 3
+    
+    def get_weight(self):
+        weight = 0
         if self.state["has_shovel"]:
-            jump -= 0.5
+            weight += 0.5
         if self.state["has_sword"]:
-            jump -= 0.5
+            weight += 0.5
+        if self.state["has_swordelder"]:
+            weight += 0.5
         if self.state["has_chicken"]:
-            jump -= 0.5
+            weight += 0.5
         if self.state["has_shield"]:
-            jump -= 0.5
+            weight += 0.5
         if self.state["has_lavaTrinket"]:
-            jump -= 0.5
+            weight += 0.5
         if self.state["has_hook"]:
-            jump -= 0.5
+            weight += 0.5
         if self.state["has_princess"]:
-            jump -= 0.5
+            weight += 0.5
         if self.state["has_bomb"]:
-            jump -= 0.5
+            weight += 0.5
         if self.state["has_nuke"]:
-            jump -= 0.5
+            weight += 0.5
         if self.state["has_whistle"]:
-            jump -= 0.5
+            weight += 0.5
         if self.state["has_darkstone"]:
-            jump -= 0.5
+            weight += 0.5
         if self.state["has_burger"]:
-            jump -= 0.5
-        return jump
+            weight += 0.5
+        return weight
 
+    def get_jump(self, jump_increases: int):
+        jump = startjump + jump_increases * 0.5
+        return jump - self.get_weight()
+
+CollectionRule = typing.Callable[[ReventureState], bool]
 class BaseRegion:
     def __init__(self, name: str):
         self.name = name
         self.connections: typing.List[BaseConnection] = []
+        self.jumpconnections: typing.List[JumpConnection] = []
         self.statechange: typing.List[StateChange] = []
         self.locations: typing.List[BaseConnection] = []
+
+    def add_jumpconnection(self, jumpconnection):
+        self.jumpconnections.append(jumpconnection)
 
     def add_connection(self, connection):
         self.connections.append(connection)
@@ -170,7 +185,6 @@ class BaseRegion:
     def add_location(self, location):
         self.locations.append(location)
 
-CollectionRule = typing.Callable[[ReventureState], bool]
 class BaseConnection:
     def __init__(self, goal_region: BaseRegion, rule: CollectionRule, apitems: typing.List[str] = []):
         self.goal_region = goal_region
@@ -179,6 +193,15 @@ class BaseConnection:
     
     def can_use(self, state: ReventureState):
         return self.rule(state)
+
+class JumpConnection(BaseConnection):
+    def __init__(self, goal_region: BaseRegion, rule: CollectionRule, apitems: typing.List[str] = [], jump_req: float = 0):
+        super().__init__(goal_region, rule, apitems)
+        self.jump_req = jump_req
+
+    def get_jumpitems_req(self, state: ReventureState):
+        weight = state.get_weight()
+        return int((self.jump_req + weight - startjump) * 2)
 
 class StateChange:
     def __init__(self, states: typing.List[str], values: typing.List[bool], rule: CollectionRule, apitems: typing.List[str] = []):
@@ -329,102 +352,102 @@ class ReventureGraph:
 
 
     def simplify(self, cleanupLevel: int = 0):
-        simpleRemove: typing.List[Region] = []
-        oneways: typing.List[Region] = []
-        print(f"Regioncount: {self.count()}")
-
-        self.detect_errors()
         changed = ""
-        # Check for needless regions. Never remove Menu or Regions marked as locations
-        for region in self.regiondict.values():
-            if region.name == "Menu":
-                continue
-            if region.location:
-                continue
-            # Remove any regions that have no parents
-            if len(region.parents) == 0:
-                simpleRemove.append(region)
-                continue
+        if cleanupLevel == 0:
+            simpleRemove: typing.List[Region] = []
+            oneways: typing.List[Region] = []
 
-            # Remove any regions without connections
-            if len(region.connections) == 0:
-                simpleRemove.append(region)
-                continue
+            self.detect_errors()
+            # Check for needless regions. Never remove Menu or Regions marked as locations
+            for region in self.regiondict.values():
+                if region.name == "Menu":
+                    continue
+                if region.location:
+                    continue
+                # Remove any regions that have no parents
+                if len(region.parents) == 0:
+                    simpleRemove.append(region)
+                    continue
 
-            # Remove regions only connected to a single parent
-            remove = True
-            parent = region.parents[0]
-            for other_parent in region.parents[1:]:
-                if other_parent != parent:
-                    remove = False
-                    break
-            if remove:
-                for connection in region.connections:
-                    if not connection.region == parent:
+                # Remove any regions without connections
+                if len(region.connections) == 0:
+                    simpleRemove.append(region)
+                    continue
+
+                # Remove regions only connected to a single parent
+                remove = True
+                parent = region.parents[0]
+                for other_parent in region.parents[1:]:
+                    if other_parent != parent:
                         remove = False
                         break
                 if remove:
-                    simpleRemove.append(region)
+                    for connection in region.connections:
+                        if not connection.region == parent:
+                            remove = False
+                            break
+                    if remove:
+                        simpleRemove.append(region)
+                        continue
+                
+                # One way regions. Only remove if the total amount of apitems is less than 3
+                if len(region.parents) == 1 and len(region.connections) == 1:
+                    connections_from_parent = region.parents[0].get_connections(region)
+                    if len(connections_from_parent) != 1 and len(region.connections[0].apitems.apitems) + len(connections_from_parent[0].apitems.apitems) > 2:
+                        continue
+                    oneways.append(region)
                     continue
             
-            # One way regions
-            if len(region.parents) == 1 and len(region.connections) == 1:
-                connections_from_parent = region.parents[0].get_connections(region)
-                if len(connections_from_parent) == 1 and len(region.connections[0].apitems.apitems) != 0 and len(connections_from_parent[0].apitems.apitems) != 0:
-                    continue
-                oneways.append(region)
-                continue
-        
-        for region in simpleRemove:
-            self.remove_region(region)
-        
-        self.detect_errors()
-
-        for region in oneways:
-            if len(region.parents) != 1:
-                continue
-            if len(region.connections) != 1:
-                continue
-            parent = region.parents[0]
-            connection_to_child = region.connections[0]
-            connections_from_parent = parent.get_connections(region)
-            for conn in connections_from_parent:
-                connection_to_child.apitems.add_apitems(conn.apitems.apitems)
-                parent.add_connection(connection_to_child)
-            self.remove_region(region)
-        
-        self.detect_errors()
-
-        # Merge regions
-        mergecount = 0
-        for region in copy.copy(list(self.regiondict.values())):
-            if region.name == "Menu":
-                continue
-            # Free movement between two regions => merge
-            for parent in region.parents:
-                if not parent in [con.region for con in region.connections]:
-                    continue
-                if len(region.get_connections(parent)) != 1 or len(parent.get_connections(region)) != 1:
-                    continue # Only merge if there is a single connection between the two regions
-                if len(region.get_connections(parent)[0].apitems.apitems) != 0 or len(parent.get_connections(region)[0].apitems.apitems) != 0:
-                    continue
-                # print(f"Merging {region.name} into {parent.name}")
-                parent.merge(region)
+            for region in simpleRemove:
                 self.remove_region(region)
-                mergecount += 1
-                # self.detect_errors(f"In Merge {region.name}, {parent.name}")
-                break
-        if mergecount > 0:
-            changed += f"Merged {mergecount} regions\n"
-        
-        self.detect_errors()
+            
+            self.detect_errors()
 
-        if len(simpleRemove) + len(oneways) > 0:
-            changed += f"Removed {len(simpleRemove)} simple regions and {len(oneways)} oneways\n"
-            simpleRemove = []
-            oneways = []
+            for region in oneways:
+                if len(region.parents) != 1:
+                    continue
+                if len(region.connections) != 1:
+                    continue
+                parent = region.parents[0]
+                connection_to_child = region.connections[0]
+                connections_from_parent = parent.get_connections(region)
+                for conn in connections_from_parent:
+                    connection_to_child.apitems.add_apitems(conn.apitems.apitems)
+                    parent.add_connection(connection_to_child)
+                self.remove_region(region)
+            
+            self.detect_errors()
 
-        if cleanupLevel >= 1:
+            # Merge regions
+            mergecount = 0
+            for region in copy.copy(list(self.regiondict.values())):
+                if region.name == "Menu":
+                    continue
+                # Free movement between two regions => merge
+                for parent in region.parents:
+                    if not parent in [con.region for con in region.connections]:
+                        continue
+                    if len(region.get_connections(parent)) != 1 or len(parent.get_connections(region)) != 1:
+                        continue # Only merge if there is a single connection between the two regions
+                    if len(region.get_connections(parent)[0].apitems.apitems) != 0 or len(parent.get_connections(region)[0].apitems.apitems) != 0:
+                        continue
+                    # print(f"Merging {region.name} into {parent.name}")
+                    parent.merge(region)
+                    self.remove_region(region)
+                    mergecount += 1
+                    # self.detect_errors(f"In Merge {region.name}, {parent.name}")
+                    break
+            if mergecount > 0:
+                changed += f"Merged {mergecount} regions\n"
+            
+            self.detect_errors()
+
+            if len(simpleRemove) + len(oneways) > 0:
+                changed += f"Removed {len(simpleRemove)} simple regions and {len(oneways)} oneways\n"
+                simpleRemove = []
+                oneways = []
+
+        if cleanupLevel == 1:
             complexloop_count = 0
             for region in self.regiondict.values():
                 if region.name == "Menu":
@@ -472,7 +495,7 @@ class ReventureGraph:
                 changed += f"Reduced {reduce_connections_count} duplicate connections\n"
         self.detect_errors()
 
-        if cleanupLevel >= 2:
+        if cleanupLevel == 2:
             # Find sub root nodes and remove all useless connections to them
             for region in self.regiondict.values():
                 if region.name == "Menu":
@@ -515,7 +538,7 @@ class ReventureGraph:
                     break
         self.detect_errors()
 
-        if cleanupLevel >= 3:
+        if cleanupLevel == 3:
             # Remove regions that add nothing of value
             # We do this by checking if a regions is reachable from one of its children
             original_region_count = self.count()
@@ -524,17 +547,18 @@ class ReventureGraph:
                     continue
                 if region.location:
                     continue
-                if len(self.get_region("Menu").get_reachable_regions(ignore=region)) + 1 == original_region_count:
+                if all([not conn.region.location for conn in region.connections]) and len(self.get_region("Menu").get_reachable_regions(ignore=region)) + 1 == original_region_count:
                     self.remove_region(region)
                     changed += f"Removed {region.name} as it is redundant\n"
-                    
 
-
-        if cleanupLevel	>= 4:
             # Remove unnecessary connections
             original_region_count = self.count()
             for region in self.regiondict.values():
                 for connection in copy.copy(region.connections):
+                    if connection.region.location:
+                        continue
+                    if len(connection.apitems.apitems) > 0:
+                        continue
                     region.connections.remove(connection)
                     reachable_regions = self.get_region("Menu").get_reachable_regions()
                     if len(reachable_regions) != original_region_count:
@@ -543,9 +567,38 @@ class ReventureGraph:
                         if not connection.region in [conn.region for conn in region.connections]:
                             connection.region.parents.remove(region)
                         changed += f"Removed unnecessary connection from {region.name} to {connection.region.name}\n"
-
-                    
-            self.detect_errors()
+        
+        # NOTE: This step is not delayed because it is very expensive. It is only delayed because it uses assumptions
+        # that require the previous steps to be finished
+        if cleanupLevel == 4: 
+            # Remove bidirectional connections where one has no items (A) and one does have apitems (B).
+            # The reason this works is based on a few facts:
+            #  1. (A) is *strictly* necessary. Otherwise it would have been removed in step 3
+            #  2. (A) in a sense A is thus the "parent". If this were not the case it could have been removed.
+            #  3. It follows, that (B) is the child and a connection from a child to a parent is useless no matter the apitems it uses
+            for region in self.regiondict.values():
+                for connection in copy.copy(region.connections):
+                    if not (region in connection.region.parents):
+                        continue
+                    connectionstochild = connection.region.get_connections(region)
+                    if len(connectionstochild) != 1:
+                        continue
+                    connectionsfromchild = region.get_connections(connection.region)
+                    if len(connectionsfromchild) != 1:
+                        continue
+                    connection_to_child = connectionstochild[0]
+                    connection_from_child = connectionsfromchild[0]
+                    if len(connection_to_child.apitems.apitems) == 0 and len(connection_from_child.apitems.apitems) > 0:
+                        region.remove_connections(connection.region)
+                        connection.region.parents.remove(region)
+                        changed += f"Removed useless connection from {region.name} to {connection.region.name}\n"
+                        break
+                    elif len(connection_from_child.apitems.apitems) == 0 and len(connection_to_child.apitems.apitems) > 0:
+                        connection.region.remove_connections(region)
+                        region.parents.remove(connection.region)
+                        changed += f"Removed useless connection from {connection.region.name} to {region.name}\n"
+                        break
+        self.detect_errors()
         return changed
 
 def get_region_in_list(name: str, region_list: typing.List[Region]):
@@ -560,7 +613,22 @@ def create_plant_uml(regions: typing.List[Region]):
         plant_uml += f"class \"{region.name}\"\n"
         for connection in region.connections:
             plant_uml += f"\"{region.name}\" --> \"{connection.region.name}\""
-            conn_string = ", ".join(connection.apitems.apitems)
+            highestjump = 0
+            highestjumpitem = None
+            reqitems = copy.copy(connection.apitems.apitems)
+            for item in connection.apitems.apitems:
+                if not item.startswith("Jump"):
+                    continue
+                jump = int(item.split("_")[1])
+                if jump > highestjump:
+                    highestjump = jump
+                    if highestjumpitem != None:
+                        reqitems.remove(highestjumpitem)
+                    highestjumpitem = item
+                else:
+                    reqitems.remove(item)
+
+            conn_string = ", ".join(reqitems)
             if conn_string != "":
                 plant_uml += f" : {conn_string}"
             plant_uml += "\n"
@@ -686,6 +754,7 @@ def create_region_graph():
     # Create regions
     menu = BaseRegion("Menu")
     lonksHouse = BaseRegion("LonksHouse")
+    swordChest = BaseRegion("SwordChest")
     elder = BaseRegion("Elder")
     chicken = BaseRegion("Chicken")
     shovel = BaseRegion("Shovel")
@@ -693,6 +762,7 @@ def create_region_graph():
     castleShieldChest = BaseRegion("CastleShieldChest")
     castleMapChest = BaseRegion("CastleMapChest")
     castleRoof = BaseRegion("CastleRoof")
+    chimney = BaseRegion("Chimney")
     princessRoom = BaseRegion("PrincessRoom")
     volcanoTopExit = BaseRegion("VolcanoTopExit")
     lavaTrinket = BaseRegion("LavaTrinket")
@@ -713,6 +783,7 @@ def create_region_graph():
     secretPathMoatWell = BaseRegion("SecretPathMoatWell")
     castleMoat = BaseRegion("CastleMoat")
     barn = BaseRegion("Barn")
+    barnSecondFloor = BaseRegion("BarnSecondFloor")
     behindShopBush = BaseRegion("BehindShopBush")
     shop = BaseRegion("Shop")
     shopRoof = BaseRegion("ShopRoof")
@@ -732,6 +803,7 @@ def create_region_graph():
     fishingRod = BaseRegion("FishingRod")
     mountainLeftOutcrop = BaseRegion("MountainLeftOutcrop")
     mountainTop = BaseRegion("MountainTop")
+    strawberry = BaseRegion("Strawberry")
     mountainTreasure = BaseRegion("MountainTreasure")
     levers = BaseRegion("Levers")
     greatWaterfall = BaseRegion("GreatWaterfall")
@@ -749,6 +821,7 @@ def create_region_graph():
     fortressRoof = BaseRegion("FortressRoof")
     anvil = BaseRegion("Anvil")
     princess = BaseRegion("Princess")
+    spikeTrap = BaseRegion("SpikeTrap")
     fireEscape = BaseRegion("FireEscape")
     fortressTreasure = BaseRegion("FortressTreasure")
     rightOfFortress = BaseRegion("RightOfFortress")
@@ -763,34 +836,38 @@ def create_region_graph():
                   anvil, princess, fireEscape, fortressTreasure, rightOfFortress]
 
     start_region = random.choice(allregions)
+    start_region = elevator
     print(f"Start Region: {start_region.name}")
 
     menu.add_connection(BaseConnection(start_region, lambda state: True))
     menu.add_location(BaseConnection(loc59, lambda state: True))
 
-    lonksHouse.add_connection(BaseConnection(elder, lambda state: state.get_jump() >= 2))
+    lonksHouse.add_jumpconnection(JumpConnection(elder, lambda state: True, jump_req=2))
     lonksHouse.add_connection(BaseConnection(castleFirstFloor, lambda state: True))
     lonksHouse.add_connection(BaseConnection(volcanoBridge, lambda state: state.event("has_shovel")))
     lonksHouse.add_connection(BaseConnection(fairyFountain, lambda state: True, ["Fairy Portal"]))
-    lonksHouse.add_statechange(StateChange(["has_sword"], [True],
-                                           lambda state: not state.event("has_sword") and state.get_jump() >= 2,
-                                           ["Sword Chest"]))
+    lonksHouse.add_jumpconnection(JumpConnection(swordChest, lambda state: True, jump_req=2))
     lonksHouse.add_location(BaseConnection(loc02, lambda state: True,
                                             ["Faceplant Stone"]))
     lonksHouse.add_location(BaseConnection(loc03, lambda state: True))
-    lonksHouse.add_location(BaseConnection(loc04, lambda state: state.event("has_sword")))
+    lonksHouse.add_location(BaseConnection(loc04, lambda state: state.event("has_sword") or state.event("has_swordelder")))
     lonksHouse.add_location(BaseConnection(loc19, lambda state: state.event("has_mrhugs")))
     lonksHouse.add_location(BaseConnection(loc20, lambda state: True))
     lonksHouse.add_location(BaseConnection(loc94, lambda state: state.event("has_princess")))
+
+    swordChest.add_connection(BaseConnection(lonksHouse, lambda state: True))
+    swordChest.add_statechange(StateChange(["has_sword"], [True],
+                                           lambda state: not state.event("has_sword") and not state.event("has_swordelder"),
+                                           ["Sword Chest"]))
     
-    elder.add_connection(BaseConnection(chicken, lambda state: state.get_jump() >= 2))
+    elder.add_jumpconnection(JumpConnection(chicken, lambda state: True, jump_req=2))
     elder.add_connection(BaseConnection(shovel, lambda state: True))
-    elder.add_connection(BaseConnection(lonksHouse, lambda state: state.get_jump() >= 2))
-    elder.add_connection(BaseConnection(volcanoTopExit, lambda state: state.get_jump() >= 2))
-    elder.add_statechange(StateChange(["has_sword"], [True],
-                                      lambda state: not state.event("has_sword"),
+    elder.add_jumpconnection(JumpConnection(lonksHouse, lambda state: True, jump_req=2))
+    elder.add_jumpconnection(JumpConnection(volcanoTopExit, lambda state: True, jump_req=2))
+    elder.add_statechange(StateChange(["has_swordelder"], [True],
+                                      lambda state: not state.event("has_sword") and not state.event("has_swordelder"),
                                       ["Sword Pedestal"]))
-    elder.add_location(BaseConnection(loc01, lambda state: state.event("has_sword"),
+    elder.add_location(BaseConnection(loc01, lambda state: state.event("has_sword") or state.event("has_swordelder"),
                                       ["Elder"]))
     elder.add_location(BaseConnection(loc40, lambda state: state.event("has_mrhugs"),
                                       ["Elder"]))
@@ -800,20 +877,20 @@ def create_region_graph():
     chicken.add_statechange(StateChange(["has_chicken"], [True],
                                         lambda state: not state.event("has_chicken"),
                                         ["Chicken"]))
-    chicken.add_location(BaseConnection(loc63, lambda state: not state.event("has_chicken") and state.event("has_sword"),
+    chicken.add_location(BaseConnection(loc63, lambda state: not state.event("has_chicken") and (state.event("has_sword") or state.event("has_swordelder")),
                                         ["Chicken"]))
     chicken.add_location(BaseConnection(loc79, lambda state: not state.event("has_chicken") and state.event("has_mrhugs"),
                                         ["Chicken"]))
 
-    shovel.add_connection(BaseConnection(elder, lambda state: state.get_jump() >= 3))
+    shovel.add_jumpconnection(JumpConnection(elder, lambda state: True, jump_req=3))
     shovel.add_connection(BaseConnection(lonksHouse, lambda state: state.event("has_shovel")))
     shovel.add_statechange(StateChange(["has_shovel"], [True],
                                        lambda state: not state.event("has_shovel"),
                                        ["Shovel"]))
 
     castleFirstFloor.add_connection(BaseConnection(lonksHouse, lambda state: not state.event("has_burger") and not state.event("has_princess")))
-    castleFirstFloor.add_connection(BaseConnection(castleShieldChest, lambda state: not state.event("has_burger") and not state.event("has_princess") and state.get_jump() >= 2))
-    castleFirstFloor.add_connection(BaseConnection(castleMapChest, lambda state: not state.event("has_burger") and not state.event("has_princess") and state.get_jump() >= 3))
+    castleFirstFloor.add_jumpconnection(JumpConnection(castleShieldChest, lambda state: not state.event("has_burger") and not state.event("has_princess"), jump_req=2))
+    castleFirstFloor.add_jumpconnection(JumpConnection(castleMapChest, lambda state: not state.event("has_burger") and not state.event("has_princess"), jump_req=3))
     castleFirstFloor.add_connection(BaseConnection(sewer, lambda state: not state.event("has_burger") and not state.event("has_princess"), ["Open Castle Floor"]))
     castleFirstFloor.add_connection(BaseConnection(castleMinions, lambda state: not state.event("has_burger") and not state.event("has_princess") and state.event("castleBridgeDown")))
     castleFirstFloor.add_statechange(StateChange(["castleBridgeDown"], [True], lambda state: not state.event("has_burger") and not state.event("has_princess") and not state.event("castleBridgeDown") and 
@@ -834,7 +911,7 @@ def create_region_graph():
                                                  ["Shield"]))
     
     castleMapChest.add_connection(BaseConnection(castleFirstFloor, lambda state: True))
-    castleMapChest.add_connection(BaseConnection(castleRoof, lambda state: state.get_jump() >= 3))
+    castleMapChest.add_jumpconnection(JumpConnection(castleRoof, lambda state: True, jump_req=3))
     # castleMapChest.add_statechange(StateChange(["has_map"], [True],
     #                                            lambda state: not state.event("has_map"),
     #                                            ["map"]))
@@ -844,9 +921,11 @@ def create_region_graph():
     
     castleRoof.add_connection(BaseConnection(castleMapChest, lambda state: True))
     castleRoof.add_connection(BaseConnection(princessRoom, lambda state: True))
-    castleRoof.add_location(BaseConnection(loc30, lambda state: state.get_jump() >= 3))
+    castleRoof.add_jumpconnection(JumpConnection(chimney, lambda state: True, jump_req=3))
 
-    princessRoom.add_connection(BaseConnection(castleRoof, lambda state: state.get_jump() >= 3))
+    chimney.add_location(BaseConnection(loc30, lambda state: True))
+
+    princessRoom.add_jumpconnection(JumpConnection(castleRoof, lambda state: True, jump_req=3))
     princessRoom.add_connection(BaseConnection(castleMinions, lambda state: True))
     princessRoom.add_connection(BaseConnection(anvil, lambda state: True, ["Mirror Portal"]))
     princessRoom.add_statechange(StateChange(["has_mrhugs"], [True],
@@ -860,23 +939,23 @@ def create_region_graph():
     volcanoTopExit.add_connection(BaseConnection(lavaTrinket, lambda state: True))
     volcanoTopExit.add_connection(BaseConnection(shopLake, lambda state: True))
 
-    lavaTrinket.add_connection(BaseConnection(volcanoTopExit, lambda state: state.get_jump() >= 2))
+    lavaTrinket.add_jumpconnection(JumpConnection(volcanoTopExit, lambda state: True, jump_req=2))
     lavaTrinket.add_connection(BaseConnection(volcanoBridge, lambda state: True))
     lavaTrinket.add_statechange(StateChange(["has_lavaTrinket"], [True],
                                        lambda state: not state.event("has_lavaTrinket"),
                                        ["Lava Trinket"]))
     
-    volcanoDropStone.add_connection(BaseConnection(lavaTrinket, lambda state: state.get_jump() >= 2))
-    volcanoDropStone.add_connection(BaseConnection(volcanoBridge, lambda state: state.get_jump() >= 2))
-    volcanoDropStone.add_connection(BaseConnection(behindShopBush, lambda state: state.get_jump() >= 2))
+    volcanoDropStone.add_jumpconnection(JumpConnection(volcanoBridge, lambda state: True, jump_req=2))
+    volcanoDropStone.add_jumpconnection(JumpConnection(behindShopBush, lambda state: True, jump_req=2))
     volcanoDropStone.add_location(BaseConnection(loc06, lambda state: True))
 
     volcanoBridge.add_connection(BaseConnection(volcanoDropStone, lambda state: True))
     volcanoBridge.add_connection(BaseConnection(belowVolcanoBridge, lambda state: True))
-    volcanoBridge.add_connection(BaseConnection(lavaTrinket, lambda state: state.get_jump() >= 2))
-    volcanoBridge.add_connection(BaseConnection(sewer, lambda state: state.get_jump() >= 2 or state.event("has_sword") or state.event("has_hook")))
+    volcanoBridge.add_jumpconnection(JumpConnection(lavaTrinket, lambda state: True, jump_req=2))
+    volcanoBridge.add_jumpconnection(JumpConnection(sewer, lambda state: True, jump_req=3))
+    volcanoBridge.add_connection(BaseConnection(sewer, lambda state: state.event("has_sword") or state.event("has_hook")))
 
-    sewer.add_connection(BaseConnection(castleFirstFloor, lambda state: state.get_jump() >= 3, ["Open Castle Floor"]))
+    sewer.add_jumpconnection(JumpConnection(castleFirstFloor, lambda state: True, ["Open Castle Floor"], jump_req=3))
     sewer.add_connection(BaseConnection(volcanoBridge, lambda state: True))
     sewer.add_connection(BaseConnection(belowCastleBridge, lambda state: True))
     sewer.add_connection(BaseConnection(musicClub, lambda state: state.event("has_shovel")))
@@ -891,7 +970,7 @@ def create_region_graph():
     belowVolcanoBridge.add_location(BaseConnection(loc06, lambda state: True))
 
     goldRoom.add_connection(BaseConnection(rightOfDragon, lambda state: True))
-    goldRoom.add_connection(BaseConnection(sewerPipe, lambda state: state.get_jump() >= 2))
+    goldRoom.add_jumpconnection(JumpConnection(sewerPipe, lambda state: True, jump_req=2))
 
     leftOfDragon.add_connection(BaseConnection(volcanoGeyser, lambda state: state.event("has_shovel")))
     leftOfDragon.add_location(BaseConnection(loc10, lambda state: state.event("has_shovel")))
@@ -902,6 +981,7 @@ def create_region_graph():
     leftOfDragon.add_location(BaseConnection(loc92, lambda state: state.event("has_princess"), ["Dragon"]))
 
     rightOfDragon.add_connection(BaseConnection(volcanoGeyser, lambda state: True))
+    rightOfDragon.add_jumpconnection(JumpConnection(goldRoom, lambda state: True, jump_req=4))
     rightOfDragon.add_location(BaseConnection(loc14, lambda state: True, ["Dragon"]))
     rightOfDragon.add_location(BaseConnection(loc16, lambda state: state.event("has_sword"), ["Dragon"]))
     rightOfDragon.add_location(BaseConnection(loc29, lambda state: state.event("has_shield") and not state.event("has_lavaTrinket"), ["Dragon"]))
@@ -913,9 +993,9 @@ def create_region_graph():
     sewerPipe.add_connection(BaseConnection(goldRoom, lambda state: True))
     sewerPipe.add_location(BaseConnection(loc35, lambda state: True, ["Sewer Pipe"]))
 
-    volcanoGeyser.add_connection(BaseConnection(leftOfDragon, lambda state: True))
+    volcanoGeyser.add_connection(BaseConnection(leftOfDragon, lambda state: state.event("has_lavaTrinket")))
     volcanoGeyser.add_connection(BaseConnection(castleMinions, lambda state: True, ["Volcano Geyser"]))
-    volcanoGeyser.add_connection(BaseConnection(ultimateDoor, lambda state: state.get_jump() >= 2))
+    volcanoGeyser.add_jumpconnection(JumpConnection(ultimateDoor, lambda state: True, jump_req=2))
     volcanoGeyser.add_location(BaseConnection(loc06, lambda state: True))
 
     ultimateDoor.add_connection(BaseConnection(volcanoGeyser, lambda state: True))
@@ -925,7 +1005,8 @@ def create_region_graph():
     castleMinions.add_connection(BaseConnection(castleFirstFloor, lambda state: state.event("castleBridgeDown")))
     castleMinions.add_connection(BaseConnection(secretPathMoatWell, lambda state: True))
     castleMinions.add_connection(BaseConnection(hookArea, lambda state: True))
-    castleMinions.add_connection(BaseConnection(aboveHook, lambda state: state.get_jump() >= 2 or state.event("has_hook")))
+    castleMinions.add_jumpconnection(JumpConnection(aboveHook, lambda state: True, jump_req=2))
+    castleMinions.add_connection(BaseConnection(aboveHook, lambda state: state.event("has_hook")))
     castleMinions.add_connection(BaseConnection(cloud, lambda state: True, ["Vine"]))
     castleMinions.add_location(BaseConnection(loc03, lambda state: True))
     castleMinions.add_location(BaseConnection(loc13, lambda state: state.event("has_mrhugs")))
@@ -935,29 +1016,33 @@ def create_region_graph():
     cloud.add_connection(BaseConnection(castleRoof, lambda state: True))
     cloud.add_location(BaseConnection(loc77, lambda state: True))
 
-    belowCastleBridge.add_connection(BaseConnection(sewer, lambda state: state.get_jump() >= 2.5))
-    belowCastleBridge.add_connection(BaseConnection(secretPathMoatWell, lambda state: state.get_jump() >= 3))
+    belowCastleBridge.add_jumpconnection(JumpConnection(sewer, lambda state: True, jump_req=2.5))
+    belowCastleBridge.add_jumpconnection(JumpConnection(secretPathMoatWell, lambda state: True, jump_req=3))
     belowCastleBridge.add_connection(BaseConnection(castleMoat, lambda state: True))
 
     secretPathMoatWell.add_connection(BaseConnection(belowCastleBridge, lambda state: True))
-    secretPathMoatWell.add_connection(BaseConnection(castleMinions, lambda state: state.get_jump() >= 3))
-    secretPathMoatWell.add_connection(BaseConnection(bomb, lambda state: state.get_jump() >= 2))
+    secretPathMoatWell.add_jumpconnection(JumpConnection(castleMinions, lambda state: True, jump_req=3))
+    secretPathMoatWell.add_jumpconnection(JumpConnection(bomb, lambda state: True, jump_req=2))
 
-    castleMoat.add_connection(BaseConnection(belowCastleBridge, lambda state: state.get_jump() >= 2))
+    castleMoat.add_jumpconnection(JumpConnection(belowCastleBridge, lambda state: True, jump_req=2))
     castleMoat.add_connection(BaseConnection(ultimateDoor, lambda state: state.event("has_shovel")))
     castleMoat.add_connection(BaseConnection(barn, lambda state: state.event("has_sword")))
-    castleMoat.add_connection(BaseConnection(fishingBridge, lambda state: state.get_jump() >= 2 or state.event("has_sword")))
+    castleMoat.add_jumpconnection(JumpConnection(fishingBridge, lambda state: True, jump_req=2))
+    castleMoat.add_connection(BaseConnection(fishingBridge, lambda state: state.event("has_sword")))
     castleMoat.add_location(BaseConnection(loc95, lambda state: True))
     castleMoat.add_location(BaseConnection(loc07, lambda state: True))
+
+    barn.add_jumpconnection(JumpConnection(barnSecondFloor, lambda state: True, jump_req=2))
+    barn.add_location(BaseConnection(loc86, lambda state: state.event("has_princess")))
+
+    barnSecondFloor.add_location(BaseConnection(loc31, lambda state: state.event("has_sword")))
 
     behindShopBush.add_connection(BaseConnection(volcanoDropStone, lambda state: True))
     behindShopBush.add_connection(BaseConnection(shopLake, lambda state: state.event("has_sword")))
 
-    barn.add_location(BaseConnection(loc31, lambda state: state.event("has_sword") and state.get_jump() >= 2))
-    barn.add_location(BaseConnection(loc86, lambda state: state.event("has_princess")))
-
     shop.add_connection(BaseConnection(shopLake, lambda state: True))
-    shop.add_connection(BaseConnection(shopRoof, lambda state: state.get_jump() >= 2))
+    shop.add_jumpconnection(JumpConnection(shopRoof, lambda state: True, jump_req=2))
+    shop.add_jumpconnection(JumpConnection(nukeStorage, lambda state: True, jump_req=4))
     shop.add_connection(BaseConnection(nukeStorage, lambda state: state.event("has_hook")))
     shop.add_connection(BaseConnection(shopCellar, lambda state: state.event("has_princess")))
     shop.add_connection(BaseConnection(fortressMoat, lambda state: True, ["Shop Cannon"]))
@@ -970,13 +1055,14 @@ def create_region_graph():
     shop.add_location(BaseConnection(loc95, lambda state: True))
 
     shopRoof.add_connection(BaseConnection(shop, lambda state: True))
-    shopRoof.add_connection(BaseConnection(ocean, lambda state: state.get_jump() >= 3 or state.event("has_sword")))
+    shopRoof.add_jumpconnection(JumpConnection(ocean, lambda state: True, jump_req=3))
+    shopRoof.add_connection(BaseConnection(ocean, lambda state: state.event("has_sword")))
     shopRoof.add_location(BaseConnection(loc03, lambda state: True))
     shopRoof.add_location(BaseConnection(loc13, lambda state: state.event("has_mrhugs")))
     shopRoof.add_location(BaseConnection(loc25, lambda state: state.event("has_sword")))
     shopRoof.add_location(BaseConnection(eventKillJuan, lambda state: state.event("has_sword")))
 
-    shopLake.add_connection(BaseConnection(volcanoTopExit, lambda state: state.get_jump() >= 2))
+    shopLake.add_jumpconnection(JumpConnection(volcanoTopExit, lambda state: True, jump_req=2))
     shopLake.add_connection(BaseConnection(behindShopBush, lambda state: state.event("has_sword")))
     shopLake.add_connection(BaseConnection(shop, lambda state: True))
 
@@ -996,18 +1082,22 @@ def create_region_graph():
 
     parasite.add_location(BaseConnection(loc89, lambda state: True))
 
+    hookArea.add_jumpconnection(JumpConnection(castleMinions, lambda state: True, jump_req=3))
     hookArea.add_connection(BaseConnection(castleMinions, lambda state: state.event("has_hook")))
     hookArea.add_statechange(StateChange(["has_hook"], [True],
                                         lambda state: not state.event("has_hook"),
                                         ["Hook"]))
     
     aboveHook.add_connection(BaseConnection(castleMinions, lambda state: True))
-    aboveHook.add_connection(BaseConnection(aboveAboveHook, lambda state: state.get_jump() >= 3 or state.event("has_hook")))
+    aboveHook.add_jumpconnection(JumpConnection(aboveAboveHook, lambda state: True, jump_req=3))
+    aboveHook.add_connection(BaseConnection(aboveAboveHook, lambda state: state.event("has_hook")))
     aboveHook.add_connection(BaseConnection(bomb, lambda state: True))
 
     aboveAboveHook.add_connection(BaseConnection(aboveHook, lambda state: True))
-    aboveAboveHook.add_connection(BaseConnection(castleCannonToShop, lambda state: state.event("has_hook") or state.get_jump() >= 3))
-    aboveAboveHook.add_connection(BaseConnection(altar, lambda state: state.get_jump() >= 2 or state.event("has_hook")))
+    aboveAboveHook.add_jumpconnection(JumpConnection(castleCannonToShop, lambda state: True, jump_req=3))
+    aboveAboveHook.add_connection(BaseConnection(castleCannonToShop, lambda state: state.event("has_hook")))
+    aboveAboveHook.add_jumpconnection(JumpConnection(altar, lambda state: True, jump_req=2))
+    aboveAboveHook.add_connection(BaseConnection(altar, lambda state: state.event("has_hook")))
 
     castleCannonToShop.add_connection(BaseConnection(aboveAboveHook, lambda state: True))
     castleCannonToShop.add_connection(BaseConnection(shopLake, lambda state: True, ["Castle To Shop Cannon"]))
@@ -1015,16 +1105,18 @@ def create_region_graph():
     castleCannonToShop.add_location(BaseConnection(loc56, lambda state: state.event("has_nuke"), ["Castle To Shop Cannon"]))
 
     altar.add_connection(BaseConnection(aboveAboveHook, lambda state: True))
-    altar.add_connection(BaseConnection(mountainLeftOutcrop, lambda state: state.get_jump() >= 2))
-    altar.add_connection(BaseConnection(levers, lambda state: state.event("has_hook") or state.get_jump() >= 3))
+    altar.add_jumpconnection(JumpConnection(mountainLeftOutcrop, lambda state: True, jump_req=2))
+    altar.add_jumpconnection(JumpConnection(levers, lambda state: True, jump_req=3))
+    altar.add_connection(BaseConnection(levers, lambda state: state.event("has_hook")))
     altar.add_connection(BaseConnection(greatWaterfall, lambda state: True))
     altar.add_location(BaseConnection(loc72, lambda state: state.event("has_princess")))
 
-    bomb.add_connection(BaseConnection(aboveHook, lambda state: state.get_jump() >= 3 or state.event("has_hook")))
+    bomb.add_jumpconnection(JumpConnection(aboveHook, lambda state: True, jump_req=3))
+    bomb.add_connection(BaseConnection(aboveHook, lambda state: state.event("has_hook")))
     bomb.add_connection(BaseConnection(fishingBridge, lambda state: True))
     bomb.add_connection(BaseConnection(secretPathMoatWell, lambda state: True))
-    bomb.add_connection(BaseConnection(secretAboveBomb, lambda state: state.get_jump() >= 3))
-    bomb.add_connection(BaseConnection(greatWaterfall, lambda state: state.event("has_bomb") and state.get_jump() >= 2))
+    bomb.add_jumpconnection(JumpConnection(secretAboveBomb, lambda state: True, jump_req=3))
+    bomb.add_jumpconnection(JumpConnection(greatWaterfall, lambda state: state.event("has_bomb"), jump_req=2))
     bomb.add_statechange(StateChange(["has_bomb"], [True],
                                     lambda state: not state.event("has_bomb"),
                                     ["Bomb"]))
@@ -1033,33 +1125,39 @@ def create_region_graph():
     bomb.add_location(BaseConnection(loc54, lambda state: state.event("has_mrhugs"), ["Boulder"]))
 
     fishingBridge.add_connection(BaseConnection(castleMoat, lambda state: True))
-    fishingBridge.add_connection(BaseConnection(fishingRod, lambda state: state.get_jump() >= 2))
+    fishingBridge.add_jumpconnection(JumpConnection(fishingRod, lambda state: True, jump_req=2))
     fishingBridge.add_connection(BaseConnection(belowFishingBridge, lambda state: True))
 
-    belowFishingBridge.add_connection(BaseConnection(fishingBridge, lambda state: state.get_jump() >= 2))
+    belowFishingBridge.add_jumpconnection(JumpConnection(fishingBridge, lambda state: True, jump_req=2))
     belowFishingBridge.add_connection(BaseConnection(waterFalls, lambda state: True))
 
     fishingRod.add_connection(BaseConnection(fishingBridge, lambda state: True))
-    fishingRod.add_connection(BaseConnection(bomb, lambda state: state.get_jump() >= 2))
+    fishingRod.add_jumpconnection(JumpConnection(bomb, lambda state: True, jump_req=2))
     fishingRod.add_location(BaseConnection(loc12, lambda state: True))
 
     mountainLeftOutcrop.add_connection(BaseConnection(altar, lambda state: True))
-    mountainLeftOutcrop.add_connection(BaseConnection(mountainTop, lambda state: state.get_jump() >= 3 or state.event("has_hook") or state.event("has_sword")))
+    mountainLeftOutcrop.add_jumpconnection(JumpConnection(mountainTop, lambda state: True, jump_req=3))
+    mountainLeftOutcrop.add_connection(BaseConnection(mountainTop, lambda state: state.event("has_hook") or state.event("has_sword")))
     mountainLeftOutcrop.add_location(BaseConnection(loc46, lambda state: True))
 
     mountainTop.add_connection(BaseConnection(mountainLeftOutcrop, lambda state: True))
     mountainTop.add_connection(BaseConnection(mountainTreasure, lambda state: True))
     mountainTop.add_connection(BaseConnection(cloud, lambda state: state.event("has_chicken")))
-    mountainTop.add_location(BaseConnection(loc24, lambda state: state.get_jump() >= 3))
+    mountainTop.add_jumpconnection(JumpConnection(strawberry, lambda state: True, jump_req=3))
     mountainTop.add_location(BaseConnection(eventKillMiguel, lambda state: state.event("has_sword")))
+
+    strawberry.add_location(BaseConnection(loc24, lambda state: True))
 
     mountainTreasure.add_connection(BaseConnection(belowLeapOfFaith, lambda state: True))
     mountainTreasure.add_location(BaseConnection(loc33, lambda state: True))
     mountainTreasure.add_location(BaseConnection(loc62, lambda state: state.event("has_shovel")))
 
+    levers.add_jumpconnection(JumpConnection(altar, lambda state: True, jump_req=4))
     levers.add_connection(BaseConnection(altar, lambda state: state.event("has_hook")))
+    levers.add_jumpconnection(JumpConnection(belowLeapOfFaith, lambda state: True, jump_req=4))
     levers.add_connection(BaseConnection(belowLeapOfFaith, lambda state: state.event("has_hook")))
-    levers.add_connection(BaseConnection(darkstone, lambda state: state.get_jump() >= 3 or state.event("has_hook"), ["Dark Stone Lever Middle"]))
+    levers.add_jumpconnection(JumpConnection(darkstone, lambda state: True, ["Dark Stone Lever Middle"], jump_req=3))
+    levers.add_connection(BaseConnection(darkstone, lambda state: state.event("has_hook"), ["Dark Stone Lever Middle"]))
     levers.add_connection(BaseConnection(greatWaterfall, lambda state: True))
     levers.add_location(BaseConnection(loc38, lambda state: True, ["Dark Stone Lever Left"]))
     levers.add_location(BaseConnection(loc44, lambda state: True, ["Dark Stone Lever Right"]))
@@ -1070,7 +1168,7 @@ def create_region_graph():
     darkstone.add_statechange(StateChange(["has_burger"], [True],
                                         lambda state: not state.event("has_burger"), ["Burger"]))
 
-    greatWaterfall.add_connection(BaseConnection(altar, lambda state: state.get_jump() >= 2))
+    greatWaterfall.add_jumpconnection(JumpConnection(altar, lambda state: True, jump_req=2))
     greatWaterfall.add_connection(BaseConnection(belowFishingBridge, lambda state: True))
     greatWaterfall.add_connection(BaseConnection(bomb, lambda state: state.event("has_bomb")))
     greatWaterfall.add_connection(BaseConnection(greatWaterfallBottom, lambda state: True))
@@ -1078,14 +1176,15 @@ def create_region_graph():
     greatWaterfall.add_connection(BaseConnection(whistleAltar, lambda state: True))
 
     greatWaterfallBottom.add_connection(BaseConnection(waterFalls, lambda state: True))
-    greatWaterfallBottom.add_connection(BaseConnection(aboveWaterfalls, lambda state: state.get_jump() >= 2))
+    greatWaterfallBottom.add_jumpconnection(JumpConnection(aboveWaterfalls, lambda state: True, jump_req=2))
+    greatWaterfallBottom.add_connection(BaseConnection(fortressMoat, lambda state: True))
 
     secretAboveBomb.add_connection(BaseConnection(bomb, lambda state: True))
     secretAboveBomb.add_connection(BaseConnection(greatWaterfall, lambda state: True))
 
-    waterFalls.add_connection(BaseConnection(belowFishingBridge, lambda state: state.get_jump() >= 2))
+    waterFalls.add_jumpconnection(JumpConnection(belowFishingBridge, lambda state: True, jump_req=2))
     waterFalls.add_connection(BaseConnection(mountainTop, lambda state: state.event("has_chicken"), ["Waterfall Geyser"]))
-    waterFalls.add_connection(BaseConnection(aboveWaterfalls, lambda state: state.get_jump() >= 2))
+    waterFalls.add_jumpconnection(JumpConnection(aboveWaterfalls, lambda state: True, jump_req=2))
     waterFalls.add_location(BaseConnection(loc08, lambda state: True))
     waterFalls.add_location(BaseConnection(loc82, lambda state: state.event("has_princess")))
     waterFalls.add_location(BaseConnection(loc87, lambda state: True, ["Event Kill Juan", "Event Kill Miguel", "Event Kill Javi", "Event Kill Alberto", "Event Kill Daniel"]))
@@ -1095,10 +1194,11 @@ def create_region_graph():
     aboveWaterfalls.add_connection(BaseConnection(fortressMoat, lambda state: True))
 
     fortressMoat.add_connection(BaseConnection(waterFalls, lambda state: True))
-    fortressMoat.add_connection(BaseConnection(aboveWaterfalls, lambda state: state.get_jump() >= 2))
+    fortressMoat.add_jumpconnection(JumpConnection(aboveWaterfalls, lambda state: True, jump_req=2))
     fortressMoat.add_connection(BaseConnection(fairyFountain, lambda state: True))
-    fortressMoat.add_connection(BaseConnection(fortressBridgeButton, lambda state: state.get_jump() >= 2))
-    fortressMoat.add_connection(BaseConnection(rightOfFortress, lambda state: state.get_jump() >= 3 or state.event("has_hook")
+    fortressMoat.add_jumpconnection(JumpConnection(fortressBridgeButton, lambda state: True, jump_req=2))
+    fortressMoat.add_jumpconnection(JumpConnection(rightOfFortress, lambda state: True, jump_req=3))
+    fortressMoat.add_connection(BaseConnection(rightOfFortress, lambda state: state.event("has_hook")
                                                or state.event("has_shovel") or state.event("has_bomb")))
     fortressMoat.add_location(BaseConnection(loc15, lambda state: True))
     fortressMoat.add_location(BaseConnection(loc21, lambda state: True))
@@ -1116,20 +1216,22 @@ def create_region_graph():
     fairyFountain.add_location(BaseConnection(loc65, lambda state: True))
     fairyFountain.add_location(BaseConnection(loc85, lambda state: state.event("has_sword") or state.event("has_mrhugs")))
 
-    whistle.add_connection(BaseConnection(greatWaterfall, lambda state: state.get_jump() >= 2))
+    whistle.add_jumpconnection(JumpConnection(greatWaterfall, lambda state: True, jump_req=2))
     whistle.add_connection(BaseConnection(greatWaterfallBottom, lambda state: True))
     whistle.add_connection(BaseConnection(whistleAltar, lambda state: True))
     whistle.add_statechange(StateChange(["has_whistle"], [True],
                                         lambda state: not state.event("has_whistle"),
                                         ["Whistle"]))
     
-    whistleAltar.add_connection(BaseConnection(greatWaterfall, lambda state: state.get_jump() >= 2))
+    whistleAltar.add_jumpconnection(JumpConnection(greatWaterfall, lambda state: True, jump_req=2))
     whistleAltar.add_connection(BaseConnection(greatWaterfallBottom, lambda state: True))
-    whistleAltar.add_connection(BaseConnection(belowLeapOfFaith, lambda state: state.get_jump() >= 3))
+    whistleAltar.add_jumpconnection(JumpConnection(belowLeapOfFaith, lambda state: True, jump_req=3))
+    whistleAltar.add_jumpconnection(JumpConnection(elevator, lambda state: not state.event("has_princess"), jump_req=3))
     whistleAltar.add_connection(BaseConnection(elevator, lambda state: not state.event("has_princess")
-                                               and (state.get_jump() >= 3 or state.event("has_hook") or state.event("fortressBridgeDown"))))
-    whistleAltar.add_connection(BaseConnection(fortressRoof, lambda state: not state.event("fortressBridgeDown")
-                                               and (state.get_jump() >= 3 or (state.event("has_hook") and state.get_jump() >= 2))))
+                                               and (state.event("has_hook") or state.event("fortressBridgeDown"))))
+    whistleAltar.add_jumpconnection(JumpConnection(fortressRoof, lambda state: not state.event("fortressBridgeDown"), jump_req=3))
+    whistleAltar.add_jumpconnection(JumpConnection(fortressRoof, lambda state: not state.event("fortressBridgeDown") and state.event("has_hook"), jump_req=2))
+    whistleAltar.add_jumpconnection(JumpConnection(whistle, lambda state: True, jump_req=3))
     whistleAltar.add_location(BaseConnection(loc39, lambda state: True))
     whistleAltar.add_location(BaseConnection(loc69, lambda state: state.event("has_sword") and state.event("has_princess")))
     whistleAltar.add_location(BaseConnection(loc73, lambda state: state.event("has_princess") and state.event("has_mrhugs")))
@@ -1145,6 +1247,7 @@ def create_region_graph():
     elevator.add_connection(BaseConnection(whistleAltar, lambda state: state.event("fortressBridgeDown") and not state.event("has_princess")))
     elevator.add_connection(BaseConnection(anvil, lambda state: True, ["Elevator Button"]))
     elevator.add_connection(BaseConnection(anvil, lambda state: True, ["Call Elevator Buttons"]))
+    elevator.add_jumpconnection(JumpConnection(rightOfFortress, lambda state: True, jump_req=4))
     elevator.add_location(BaseConnection(loc34, lambda state: True, ["Elevator Button"]))
     elevator.add_location(BaseConnection(loc34, lambda state: True, ["Call Elevator Button"]))
     elevator.add_location(BaseConnection(loc34, lambda state: state.event("has_princess")))
@@ -1163,10 +1266,12 @@ def create_region_graph():
     fortressRoof.add_location(BaseConnection(loc58, lambda state: not state.event("has_chicken") and not state.event("has_princess")))
     fortressRoof.add_location(BaseConnection(loc84, lambda state: state.event("has_nuke"), ["Dark Fortress Cannon"]))
 
+    anvil.add_jumpconnection(JumpConnection(fortressRoof, lambda state: True, jump_req=4))
     anvil.add_connection(BaseConnection(fortressRoof, lambda state: state.event("has_hook")))
     anvil.add_connection(BaseConnection(elevator, lambda state: True, ["Elevator Button"]))
     anvil.add_connection(BaseConnection(elevator, lambda state: True, ["Call Elevator Buttons"]))
-    anvil.add_connection(BaseConnection(princess, lambda state: state.get_jump() >= 2 or state.event("has_hook")))
+    anvil.add_jumpconnection(JumpConnection(princess, lambda state: True, jump_req=3))
+    anvil.add_connection(BaseConnection(princess, lambda state: state.event("has_hook")))
     anvil.add_connection(BaseConnection(fireEscape, lambda state: state.event("has_princess")))
     anvil.add_connection(BaseConnection(fortressTreasure, lambda state: state.event("has_princess")))
     anvil.add_location(BaseConnection(loc22, lambda state: True, ["Anvil"]))
@@ -1175,24 +1280,29 @@ def create_region_graph():
     anvil.add_location(BaseConnection(loc98, lambda state: not state.event("has_princess") and state.event("has_burger"), ["Mimic"]))
     
     princess.add_connection(BaseConnection(anvil, lambda state: True))
-    princess.add_statechange(StateChange(["has_princess"], [True],
+    princess.add_jumpconnection(JumpConnection(spikeTrap, lambda state: not state.event("has_princess"), jump_req=2))
+    princess.add_connection(BaseConnection(spikeTrap, lambda state: not state.event("has_princess") and state.event("has_hook")))
+    princess.add_statechange(StateChange(["has_princess", "fortressBridgeDown"], [True, True],
                                         lambda state: not state.event("has_princess"),
                                         ["Princess"]))
     princess.add_location(BaseConnection(loc45, lambda state: state.event("has_princess")))
     princess.add_location(BaseConnection(loc57, lambda state: state.event("has_princess") and state.event("has_mrhugs")))
     princess.add_location(BaseConnection(loc64, lambda state: not state.event("has_princess") and state.event("has_sword")))
-    princess.add_location(BaseConnection(loc70, lambda state: not state.event("has_princess") and (state.event("has_hook") or state.get_jump() >= 2))) 
+
+    spikeTrap.add_location(BaseConnection(loc70, lambda state: True)) 
     
     fireEscape.add_connection(BaseConnection(elevator, lambda state: True))
-    fireEscape.add_connection(BaseConnection(fortressRoof, lambda state: state.get_jump() >= 2))
-    fireEscape.add_connection(BaseConnection(whistleAltar, lambda state: True))
+    fireEscape.add_jumpconnection(JumpConnection(fortressRoof, lambda state: True, jump_req=2))
+    fireEscape.add_connection(BaseConnection(whistleAltar, lambda state: state.event("fortressBridgeDown")))
 
     fortressTreasure.add_connection(BaseConnection(rightOfFortress, lambda state: True))
     fortressTreasure.add_location(BaseConnection(loc68, lambda state: True))
     fortressTreasure.add_location(BaseConnection(eventKillJavi, lambda state: state.event("has_sword")))
 
-    rightOfFortress.add_connection(BaseConnection(fortressTreasure, lambda state: state.get_jump() >= 3))
+    rightOfFortress.add_jumpconnection(JumpConnection(fortressTreasure, lambda state: True, jump_req=3))
     rightOfFortress.add_connection(BaseConnection(elevator, lambda state: True))
+    rightOfFortress.add_jumpconnection(JumpConnection(fortressMoat, lambda state: True, jump_req=3))
+    rightOfFortress.add_connection(BaseConnection(fortressMoat, lambda state: state.event("has_hook")))
     # rightOfFortress.add_connection(BaseConnection(desert, lambda state: state.get_jump() == 1))
     rightOfFortress.add_location(BaseConnection(loc81, lambda state: state.event("has_princess")))
 
@@ -1217,6 +1327,20 @@ def create_region_graph():
         region: Region = todo_regions.pop(0)
         del todo_regionsdict[region.name]
         for base_region in region.base_regions:
+            for jumpconnection in base_region.jumpconnections:
+                reqjumpincreases = jumpconnection.get_jumpitems_req(region.state)
+                if reqjumpincreases > totaljumpincrease: # There are only 6 increases. If we need more, we cannot reach this jumpconnection
+                    continue
+                name = get_region_name([jumpconnection.goal_region], region.state)
+                new_region = region_graph.get_region(name)
+                if new_region is None:
+                    new_region = todo_regionsdict.get(name, None)
+                if new_region is None:
+                    new_region = Region(jumpconnection.goal_region, region.state)
+                    todo_regions.append(new_region)
+                    todo_regionsdict[new_region.name] = new_region
+                region.add_connection(Connection(new_region, jumpconnection.apitems + [f"Jump Increase_{i+1}" for i in range(reqjumpincreases)]))
+
             for base_connection in base_region.connections:
                 if not base_connection.can_use(region.state):
                     continue
@@ -1258,7 +1382,9 @@ def create_region_graph():
                         region_graph.add_region(new_region)
                     region.add_connection(Connection(new_region, statechange.apitems))
                 
-                if new_state.get_jump() > 0.5: # Being 0.5 or lower is not possible because it would trigger ending 26
+                weight = new_state.get_weight()
+                reqjumpincreases = weight * 2
+                if reqjumpincreases <= totaljumpincrease: # There are only 6 increases. If we need more, we cannot reach this statechange
                     name = get_region_name(region.base_regions, new_state)
                     new_region = region_graph.get_region(name)
                     if new_region is None:
@@ -1390,31 +1516,14 @@ def create_region_graph():
 
     print(f"Time: {time.time() - starttime}")
     print("Simplifying graph")
-    while True:
-        change = region_graph.simplify()
+    level = 0
+    while level < 5:
+        change = region_graph.simplify(cleanupLevel=level)
+        print(f"Regioncount: {region_graph.count()}, Level: {level}")
         if change == "":
-            break
-        # print(change)
-
-    print("Simplifying graph level 1")
-    while True:
-        change = region_graph.simplify(cleanupLevel=1)
-        if change == "":
-            break
-        # print(change)
-    
-    print("Simplifying graph level 2")
-    while True:
-        change = region_graph.simplify(cleanupLevel=2)
-        if change == "":
-            break
-        # print(change)
-
-    print("Simplifying graph level 3")
-    while True:
-        change = region_graph.simplify(cleanupLevel=3)
-        if change == "":
-            break
+            level += 1
+        else:
+            level = 0
         # print(change)
 
     print(f"Regioncount: {region_graph.count()}")
