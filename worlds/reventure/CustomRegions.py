@@ -302,6 +302,7 @@ class ReventureGraph:
     def __init__(self):
         self.regiondict: typing.Dict[str, Region] = {}
         self.start_region: Region = None
+        self.item_locations: typing.List[Region] = []
 
     def add_region(self, region: Region):
         self.regiondict[region.name] = region
@@ -641,6 +642,14 @@ def write_plantuml(region_graph: ReventureGraph):
     with open("reventure_graph.plantuml", "w") as file:
         file.write(plantuml)
 
+class ItemPlacement():
+    def __init__(self, apitem: str, state: str, exclstates: typing.List[str] = None):
+        self.apitem = apitem
+        self.state = state
+        if exclstates == None:
+            self.exclstates = [state]
+        else:
+            self.exclstates = exclstates
 
 def create_region_graph():
     # Create Location Regions
@@ -838,6 +847,40 @@ def create_region_graph():
     start_region = random.choice(allregions)
     print(f"Start Region: {start_region.name}")
 
+    # Generate item randomization
+    item_locations = random.sample(allregions, 10)
+    # Place Items
+    item_locations[0].add_statechange(StateChange(["has_sword"], [True],
+                                        lambda state: not state.event("has_princess") and not state.event("has_sword") and not state.event("has_swordelder"),
+                                          ["Sword Chest"]))
+    item_locations[1].add_statechange(StateChange(["has_swordelder"], [True],
+                                        lambda state: not state.event("has_princess") and not state.event("has_sword") and not state.event("has_swordelder"),
+                                        ["Sword Pedestal"]))
+    item_locations[2].add_statechange(StateChange(["has_shovel"], [True],
+                                        lambda state: not state.event("has_princess") and not state.event("has_shovel"),
+                                        ["Shovel"]))
+    item_locations[3].add_statechange(StateChange(["has_bomb"], [True],
+                                        lambda state: not state.event("has_princess") and not state.event("has_bomb"),
+                                        ["Bomb"]))
+    item_locations[4].add_statechange(StateChange(["has_shield"], [True],
+                                        lambda state: not state.event("has_princess") and not state.event("has_shield"),
+                                        ["Shield"]))
+    item_locations[5].add_statechange(StateChange(["has_mrhugs"], [True],
+                                        lambda state: not state.event("has_princess") and not state.event("has_mrhugs"),
+                                        ["Mister Hugs"]))
+    item_locations[6].add_statechange(StateChange(["has_lavaTrinket"], [True],
+                                        lambda state: not state.event("has_princess") and not state.event("has_lavaTrinket"),
+                                        ["Lava Trinket"]))
+    item_locations[7].add_statechange(StateChange(["has_hook"], [True],
+                                        lambda state: not state.event("has_princess") and not state.event("has_hook"),
+                                        ["Hook"]))
+    item_locations[8].add_statechange(StateChange(["has_nuke"], [True],
+                                        lambda state: not state.event("has_princess") and not state.event("has_nuke"),
+                                        ["Nuke"]))
+    item_locations[9].add_statechange(StateChange(["has_whistle"], [True],
+                                        lambda state: not state.event("has_princess") and not state.event("has_whistle"),
+                                        ["Whistle"]))
+
     menu.add_connection(BaseConnection(start_region, lambda state: True))
     menu.add_location(BaseConnection(loc59, lambda state: True))
 
@@ -855,17 +898,11 @@ def create_region_graph():
     lonksHouse.add_location(BaseConnection(loc94, lambda state: state.event("has_princess")))
 
     swordChest.add_connection(BaseConnection(lonksHouse, lambda state: True))
-    swordChest.add_statechange(StateChange(["has_sword"], [True],
-                                           lambda state: not state.event("has_princess") and not state.event("has_sword") and not state.event("has_swordelder"),
-                                           ["Sword Chest"]))
     
     elder.add_jumpconnection(JumpConnection(chicken, lambda state: True, jump_req=2))
     elder.add_connection(BaseConnection(shovel, lambda state: True))
     elder.add_jumpconnection(JumpConnection(lonksHouse, lambda state: True, jump_req=2))
     elder.add_jumpconnection(JumpConnection(volcanoTopExit, lambda state: True, jump_req=2))
-    elder.add_statechange(StateChange(["has_swordelder"], [True],
-                                      lambda state: not state.event("has_princess") and not state.event("has_sword") and not state.event("has_swordelder"),
-                                      ["Sword Pedestal"]))
     elder.add_location(BaseConnection(loc01, lambda state: state.event("has_sword") or state.event("has_swordelder"),
                                       ["Elder"]))
     elder.add_location(BaseConnection(loc40, lambda state: state.event("has_mrhugs"),
@@ -883,9 +920,6 @@ def create_region_graph():
 
     shovel.add_jumpconnection(JumpConnection(elder, lambda state: True, jump_req=3))
     shovel.add_connection(BaseConnection(lonksHouse, lambda state: state.event("has_shovel")))
-    shovel.add_statechange(StateChange(["has_shovel"], [True],
-                                       lambda state: not state.event("has_princess") and not state.event("has_shovel"),
-                                       ["Shovel"]))
 
     castleFirstFloor.add_connection(BaseConnection(lonksHouse, lambda state: not state.event("has_burger") and not state.event("has_princess")))
     castleFirstFloor.add_jumpconnection(JumpConnection(castleShieldChest, lambda state: not state.event("has_burger") and not state.event("has_princess"), jump_req=2))
@@ -905,9 +939,6 @@ def create_region_graph():
     castleFirstFloor.add_location(BaseConnection(loc99, lambda state: not state.event("has_princess") and state.event("has_burger")))
 
     castleShieldChest.add_connection(BaseConnection(castleFirstFloor, lambda state: True))
-    castleShieldChest.add_statechange(StateChange(["has_shield"], [True],
-                                                 lambda state: not state.event("has_princess") and not state.event("has_shield"),
-                                                 ["Shield"]))
     
     castleMapChest.add_connection(BaseConnection(castleFirstFloor, lambda state: True))
     castleMapChest.add_jumpconnection(JumpConnection(castleRoof, lambda state: True, jump_req=3))
@@ -927,9 +958,6 @@ def create_region_graph():
     princessRoom.add_jumpconnection(JumpConnection(castleRoof, lambda state: True, jump_req=3))
     princessRoom.add_connection(BaseConnection(castleMinions, lambda state: True))
     princessRoom.add_connection(BaseConnection(anvil, lambda state: True, ["Mirror Portal"]))
-    princessRoom.add_statechange(StateChange(["has_mrhugs"], [True],
-                                           lambda state: not state.event("has_princess") and not state.event("has_mrhugs"),
-                                           ["Mister Hugs"]))
     princessRoom.add_location(BaseConnection(loc04, lambda state: state.event("has_sword")))
     princessRoom.add_location(BaseConnection(loc11, lambda state: state.event("has_mrhugs")))
     princessRoom.add_location(BaseConnection(loc19, lambda state: state.event("has_mrhugs")))
@@ -940,9 +968,6 @@ def create_region_graph():
 
     lavaTrinket.add_jumpconnection(JumpConnection(volcanoTopExit, lambda state: True, jump_req=2))
     lavaTrinket.add_connection(BaseConnection(volcanoBridge, lambda state: True))
-    lavaTrinket.add_statechange(StateChange(["has_lavaTrinket"], [True],
-                                       lambda state: not state.event("has_princess") and not state.event("has_lavaTrinket"),
-                                       ["Lava Trinket"]))
     
     volcanoDropStone.add_jumpconnection(JumpConnection(volcanoBridge, lambda state: True, jump_req=2))
     volcanoDropStone.add_jumpconnection(JumpConnection(behindShopBush, lambda state: True, jump_req=2))
@@ -1071,9 +1096,6 @@ def create_region_graph():
     ocean.add_location(BaseConnection(loc97, lambda state: True))
 
     nukeStorage.add_connection(BaseConnection(shop, lambda state: True))
-    nukeStorage.add_statechange(StateChange(["has_nuke"], [True],
-                                            lambda state: not state.event("has_princess") and not state.event("has_nuke"),
-                                            ["Nuke"]))
 
     shopCellar.add_connection(BaseConnection(shop, lambda state: state.event("has_princess")))
     shopCellar.add_connection(BaseConnection(parasite, lambda state: True))
@@ -1083,9 +1105,6 @@ def create_region_graph():
 
     hookArea.add_jumpconnection(JumpConnection(castleMinions, lambda state: True, jump_req=3))
     hookArea.add_connection(BaseConnection(castleMinions, lambda state: state.event("has_hook")))
-    hookArea.add_statechange(StateChange(["has_hook"], [True],
-                                        lambda state: not state.event("has_princess") and not state.event("has_hook"),
-                                        ["Hook"]))
     
     aboveHook.add_connection(BaseConnection(castleMinions, lambda state: True))
     aboveHook.add_jumpconnection(JumpConnection(aboveAboveHook, lambda state: True, jump_req=3))
@@ -1118,9 +1137,6 @@ def create_region_graph():
     bomb.add_connection(BaseConnection(secretPathMoatWell, lambda state: True))
     bomb.add_jumpconnection(JumpConnection(secretAboveBomb, lambda state: True, jump_req=3))
     bomb.add_jumpconnection(JumpConnection(greatWaterfall, lambda state: state.event("has_bomb"), jump_req=2))
-    bomb.add_statechange(StateChange(["has_bomb"], [True],
-                                    lambda state: not state.event("has_princess") and not state.event("has_bomb"),
-                                    ["Bomb"]))
     bomb.add_location(BaseConnection(loc28, lambda state: state.event("has_bomb")))
     bomb.add_location(BaseConnection(loc32, lambda state: state.event("has_sword"), ["Boulder"]))
     bomb.add_location(BaseConnection(loc54, lambda state: state.event("has_mrhugs"), ["Boulder"]))
@@ -1221,9 +1237,6 @@ def create_region_graph():
     whistle.add_jumpconnection(JumpConnection(greatWaterfall, lambda state: True, jump_req=2))
     whistle.add_connection(BaseConnection(greatWaterfallBottom, lambda state: True))
     whistle.add_connection(BaseConnection(whistleAltar, lambda state: True))
-    whistle.add_statechange(StateChange(["has_whistle"], [True],
-                                        lambda state: not state.event("has_princess") and not state.event("has_whistle"),
-                                        ["Whistle"]))
     
     whistleAltar.add_jumpconnection(JumpConnection(greatWaterfall, lambda state: True, jump_req=2))
     whistleAltar.add_connection(BaseConnection(greatWaterfallBottom, lambda state: True))
@@ -1323,6 +1336,8 @@ def create_region_graph():
 
     region_graph = ReventureGraph()
     region_graph.start_region = start_region
+    region_graph.item_locations = item_locations
+
     while todo_regions:
         # Work through regions
         # print(f"Regioncount: {len(todo_regions)}/{region_graph.count()}")

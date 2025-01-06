@@ -105,6 +105,7 @@ class ReventureWorld(World):
             slot_data[option_name] = option.value
         
         slot_data["spawn"] = self.region_graph.start_region.name
+        slot_data["itemlocations"] = ",".join([loc.name for loc in self.region_graph.item_locations])
         return slot_data
 
     def get_filler_item_name(self) -> str:
