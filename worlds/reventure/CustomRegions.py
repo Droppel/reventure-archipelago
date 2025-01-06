@@ -1259,6 +1259,7 @@ def create_region_graph():
     elevator.add_location(BaseConnection(loc76, lambda state: state.event("has_princess")))
     elevator.add_location(BaseConnection(loc80, lambda state: state.event("has_chicken")))
 
+    fortressRoof.add_jumpconnection(JumpConnection(whistleAltar, lambda state: True, jump_req=4))
     fortressRoof.add_connection(BaseConnection(whistleAltar, lambda state: state.event("fortressBridgeDown")))
     fortressRoof.add_connection(BaseConnection(anvil, lambda state: True))
     fortressRoof.add_connection(BaseConnection(castleMinions, lambda state: not state.event("has_princess") and not state.event("has_nuke"), ["Dark Fortress Cannon"]))
@@ -1304,7 +1305,6 @@ def create_region_graph():
 
     rightOfFortress.add_jumpconnection(JumpConnection(fortressTreasure, lambda state: True, jump_req=3))
     rightOfFortress.add_connection(BaseConnection(elevator, lambda state: True))
-    rightOfFortress.add_jumpconnection(JumpConnection(fortressMoat, lambda state: True, jump_req=3))
     rightOfFortress.add_connection(BaseConnection(fortressMoat, lambda state: state.event("has_hook")))
     # rightOfFortress.add_connection(BaseConnection(desert, lambda state: state.get_jump() == 1))
     rightOfFortress.add_location(BaseConnection(loc81, lambda state: state.event("has_princess")))
