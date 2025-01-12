@@ -1150,7 +1150,7 @@ def create_region_graph():
 
     fishingRod.add_connection(BaseConnection(fishingBridge, lambda state: True))
     fishingRod.add_jumpconnection(JumpConnection(bomb, lambda state: True, jump_req=2))
-    fishingRod.add_location(BaseConnection(loc12, lambda state: not state.event("has_princess")))
+    fishingRod.add_location(BaseConnection(loc12, lambda state: not state.event("has_princess"), ["Fishing Rod"]))
 
     mountainLeftOutcrop.add_connection(BaseConnection(altar, lambda state: True))
     mountainLeftOutcrop.add_jumpconnection(JumpConnection(mountainTop, lambda state: True, jump_req=3))
