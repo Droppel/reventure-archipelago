@@ -2,9 +2,12 @@ import copy
 import typing
 import time
 import random
+import cProfile
 
 totaljumpincrease = 2
 startjump = 3
+# totaljumpincrease = 4
+# startjump = 2
 
 class APItems:
     def __init__(self):
@@ -13,14 +16,22 @@ class APItems:
     def add_apitem(self, item: str):
         if not item in self.apitems:
             self.apitems.append(item)
+            return True
+        return False
     
     def remove_apitem(self, item: str):
         if item in self.apitems:
             self.apitems.remove(item)
     
     def add_apitems(self, items: typing.List[str]):
+        added = []
         for item in items:
-            self.add_apitem(item)
+            if self.add_apitem(item):
+                added.append(item)
+        return added
+
+    def remove_apitems(self, items: typing.List[str]):
+        self.apitems = [item for item in self.apitems if not item in items]
 
     def is_subset(self, other: "APItems"):
         return all(item in other.apitems for item in self.apitems)
@@ -40,27 +51,55 @@ class APItems:
 class APState:
     def __init__(self):
         self.potapitems: typing.List[APItems] = []
+        self.reducedstates: typing.Set[str] = set()
+
+    def is_rejected(self, apitems: APItems):
+        return apitems.to_string() in self.reducedstates
+
+    def add_apitems(self, apitems: APItems):
+        self.potapitems.append(apitems)
+
+    # def reduce_one(self):
+    #     for i in range(len(self.potapitems)):
+    #         for j in range(i+1, len(self.potapitems)):
+    #             if self.potapitems[i].is_subset(self.potapitems[j]):
+    #                 self.reducedstates.add(self.potapitems.pop(j).to_string())
+    #                 return True
+    #             if self.potapitems[j].is_subset(self.potapitems[i]):
+    #                 self.reducedstates.add(self.potapitems.pop(i).to_string())
+    #                 return True
+    #     return False
     
-    def reduce_one(self):
-        for i in range(len(self.potapitems)):
-            for j in range(i+1, len(self.potapitems)):
-                if self.potapitems[i].is_subset(self.potapitems[j]):
-                    self.potapitems.pop(j)
-                    return True
-                if self.potapitems[j].is_subset(self.potapitems[i]):
-                    self.potapitems.pop(i)
-                    return True
-        return False
+    # def reduce_all(self):
+    #     changed = False
+    #     while self.reduce_one():
+    #         changed = True
+    #     return changed
     
     def reduce_all(self):
-        changed = False
-        while self.reduce_one():
-            changed = True
-        return changed
+        removed = False
+        for i in range(len(self.potapitems)-2, -1, -1):
+            for j in range(len(self.potapitems)-1, i, -1):
+                removedI = False
+                # if self.potapitems[i].is_subset(self.potapitems[j]):
+                # Inlined for performance
+                if all(item in self.potapitems[j].apitems for item in self.potapitems[i].apitems):
+                    self.reducedstates.add(self.potapitems.pop(j).to_string())
+                    removed = True
+                    continue
+                # if self.potapitems[j].is_subset(self.potapitems[i]):
+                # Inlined for performance
+                if all(item in self.potapitems[i].apitems for item in self.potapitems[j].apitems):
+                    self.reducedstates.add(self.potapitems.pop(i).to_string())
+                    removed = True
+                    removedI = True
+                if removedI:
+                    break
+        return removed
+
 
 class ReventureState:
     def __init__(self):
-        self.apstate = {}
         self.state = {}
         # Items
         self.state["has_chicken"] = False
@@ -86,50 +125,14 @@ class ReventureState:
         self.state["fortressBridgeDown"] = False
         pass
 
-    def ap_has(self, item: str):
-        return self.apstate[item]
+    def copy(self):
+        new_state = ReventureState()
+        new_state.state = self.state.copy()
+        return new_state
 
     def event(self, event: str):
         return self.state[event]
-
-    def checkForceSSC(self, ssc: str):
-        return self.event(ssc) or not self.event("has_shovel")
-    
-    def checkForceBush(self, bush: str):
-        return self.event(bush) or not self.event("has_sword")
-    
-    def get_items(self):
-        items = []
-        if self.state["has_chicken"]:
-            items.append("has_chicken")
-        if self.state["has_shovel"]:
-            items.append("has_shovel")
-        if self.state["has_sword"]:
-            items.append("has_sword")
-        if self.state["has_shield"]:
-            items.append("has_shield")
-        if self.state["has_map"]:
-            items.append("has_map")
-        if self.state["has_compass"]:
-            items.append("has_compass")
-        if self.state["has_mrhugs"]:
-            items.append("has_mrhugs")
-        if self.state["has_lavaTrinket"]:
-            items.append("has_lavaTrinket")
-        if self.state["has_hook"]:
-            items.append("has_hook")
-        if self.state["has_bomb"]:
-            items.append("has_bomb")
-        if self.state["has_nuke"]:
-            items.append("has_nuke")
-        if self.state["has_whistle"]:
-            items.append("has_whistle")
-        if self.state["has_darkstone"]:
-            items.append("has_darkstone")
-        if self.state["has_burger"]:
-            items.append("has_burger")
-        return items
-    
+        
     def get_weight(self):
         weight = 0
         if self.state["has_shovel"]:
@@ -145,8 +148,6 @@ class ReventureState:
         if self.state["has_lavaTrinket"]:
             weight += 0.5
         if self.state["has_hook"]:
-            weight += 0.5
-        if self.state["has_princess"]:
             weight += 0.5
         if self.state["has_bomb"]:
             weight += 0.5
@@ -286,16 +287,16 @@ class Region:
             self.add_connection(connection)
 
     def get_reachable_regions(self, ignore = None):
-        reachable_regions = []
-        todo_regions = [self]
+        reachable_regions = set()
+        todo_regions: typing.Set[Region] = {self}
         while len(todo_regions) > 0:
-            current_region = todo_regions.pop(0)
+            current_region: Region = todo_regions.pop()
             if current_region == ignore:
                 continue
-            reachable_regions.append(current_region)
+            reachable_regions.add(current_region)
             for conn in current_region.connections:
                 if not conn.region in reachable_regions and not conn.region in todo_regions:
-                    todo_regions.append(conn.region)
+                    todo_regions.add(conn.region)
         return reachable_regions
 
 class ReventureGraph:
@@ -310,11 +311,11 @@ class ReventureGraph:
     def remove_region(self, region: Region):
         for parent in region.parents:
             parent.remove_connections(region)
-        removedChildren = []
+        removedChildren = set()
         for connection in region.connections:
             if connection.region in removedChildren:
                 continue
-            removedChildren.append(connection.region)
+            removedChildren.add(connection.region)
             connection.region.parents.remove(region)
         self.regiondict.pop(region.name)
 
@@ -325,6 +326,7 @@ class ReventureGraph:
         return self.regiondict.get(name, None)
     
     def detect_errors(self):
+        return
         for region in self.regiondict.values():
             if region.name == "Menu":
                 continue
@@ -455,18 +457,18 @@ class ReventureGraph:
                     continue
                 if region.location:
                     continue
-                todo_regions = [region]
+                todo_regions = {region}
                 reachable_regions = []
                 reachable_location = False
                 while len(todo_regions) > 0 and not reachable_location:
-                    current_region = todo_regions.pop(0)
+                    current_region = todo_regions.pop()
                     reachable_regions.append(current_region)
                     for connection in current_region.connections:
                         if connection.region.location:
                             reachable_location = True
                             break
                         if not connection.region in reachable_regions and not connection.region in todo_regions:
-                            todo_regions.append(connection.region)
+                            todo_regions.add(connection.region)
                 if not reachable_location:
                     for r in reachable_regions:
                         self.remove_region(r)
@@ -602,6 +604,52 @@ class ReventureGraph:
         self.detect_errors()
         return changed
 
+    def propagate_apstates(self):
+        parent_todo_regions = copy.copy(list(self.regiondict.values()))
+        parent_todo_regionsDict = {region.name: region for region in parent_todo_regions}
+        while len(parent_todo_regions) > 0:
+            # print(f"Apstate regions left: {len(parent_todo_regions)}")
+            region = parent_todo_regions.pop(0)
+            del parent_todo_regionsDict[region.name]
+            for connection in region.connections:
+                child = connection.region
+                prevStateLen = len(child.apstate.potapitems)
+                prevStateLengths = [len(child.apstate.potapitems[i].apitems) for i in range(prevStateLen)]
+                added = False
+                if len(connection.apitems.apitems) > 0:
+                    for potapitems in region.apstate.potapitems:
+                        addeditems = potapitems.add_apitems(connection.apitems.apitems)
+                        if child.apstate.is_rejected(potapitems):
+                            potapitems.remove_apitems(addeditems)
+                            continue
+                        added = True
+                        new_potapitems = copy.deepcopy(potapitems)
+                        potapitems.remove_apitems(addeditems)
+                        child.apstate.potapitems.append(new_potapitems)
+                else:
+                    for potapitems in region.apstate.potapitems:
+                        if child.apstate.is_rejected(potapitems):
+                            continue
+                        added = True
+                        child.apstate.potapitems.append(potapitems)
+                if not added:
+                    continue
+                child.apstate.reduce_all()
+                if child.name in parent_todo_regionsDict:
+                    continue
+                if prevStateLen != len(child.apstate.potapitems):
+                    parent_todo_regions.append(child)
+                    parent_todo_regionsDict[child.name] = child
+                    continue
+                change = any(
+                    len(child.apstate.potapitems[i].apitems) != prevStateLengths[i]
+                    for i in range(len(child.apstate.potapitems))
+                )
+                if change:
+                    parent_todo_regions.append(child)
+                    parent_todo_regionsDict[child.name] = child
+                    continue
+
 def get_region_in_list(name: str, region_list: typing.List[Region]):
     for reg in region_list:
         if reg.name == name:
@@ -637,9 +685,9 @@ def create_plant_uml(regions: typing.List[Region]):
     return plant_uml
 
 
-def write_plantuml(region_graph: ReventureGraph):
+def write_plantuml(region_graph: ReventureGraph, file_name="reventure_graph.plantuml"):
     plantuml = create_plant_uml(region_graph.regiondict.values())
-    with open("reventure_graph.plantuml", "w") as file:
+    with open(file_name, "w") as file:
         file.write(plantuml)
 
 class ItemPlacement():
@@ -845,16 +893,20 @@ def create_region_graph():
                   anvil, princess, fireEscape, fortressTreasure, rightOfFortress]
 
     start_region = random.choice(allregions)
+    start_region = lonksHouse
     print(f"Start Region: {start_region.name}")
 
     # Generate item randomization
     item_locations = random.sample(allregions, 10)
+    item_locations = [lonksHouse, elder, shovel, bomb, castleShieldChest, princessRoom, lavaTrinket, hookArea, nukeStorage, whistle]
     # Place Items
     item_locations[0].add_statechange(StateChange(["has_sword"], [True],
-                                        lambda state: not state.event("has_princess") and not state.event("has_sword") and not state.event("has_swordelder"),
+                                        lambda state: not state.event("has_princess") and not state.event("has_sword")
+                                            and not state.event("has_swordelder") and not state.event("has_mrhugs"),
                                           ["Sword Chest"]))
     item_locations[1].add_statechange(StateChange(["has_swordelder"], [True],
-                                        lambda state: not state.event("has_princess") and not state.event("has_sword") and not state.event("has_swordelder"),
+                                        lambda state: not state.event("has_princess") and not state.event("has_sword")
+                                            and not state.event("has_swordelder") and not state.event("has_mrhugs"),
                                         ["Sword Pedestal"]))
     item_locations[2].add_statechange(StateChange(["has_shovel"], [True],
                                         lambda state: not state.event("has_princess") and not state.event("has_shovel"),
@@ -868,18 +920,18 @@ def create_region_graph():
     item_locations[5].add_statechange(StateChange(["has_mrhugs"], [True],
                                         lambda state: not state.event("has_princess") and not state.event("has_mrhugs"),
                                         ["Mister Hugs"]))
-    item_locations[6].add_statechange(StateChange(["has_lavaTrinket"], [True],
-                                        lambda state: not state.event("has_princess") and not state.event("has_lavaTrinket"),
-                                        ["Lava Trinket"]))
-    item_locations[7].add_statechange(StateChange(["has_hook"], [True],
-                                        lambda state: not state.event("has_princess") and not state.event("has_hook"),
-                                        ["Hook"]))
-    item_locations[8].add_statechange(StateChange(["has_nuke"], [True],
-                                        lambda state: not state.event("has_princess") and not state.event("has_nuke"),
-                                        ["Nuke"]))
-    item_locations[9].add_statechange(StateChange(["has_whistle"], [True],
-                                        lambda state: not state.event("has_princess") and not state.event("has_whistle"),
-                                        ["Whistle"]))
+    # item_locations[6].add_statechange(StateChange(["has_lavaTrinket"], [True],
+    #                                     lambda state: not state.event("has_princess") and not state.event("has_lavaTrinket"),
+    #                                     ["Lava Trinket"]))
+    # item_locations[7].add_statechange(StateChange(["has_hook"], [True],
+    #                                     lambda state: not state.event("has_princess") and not state.event("has_hook"),
+    #                                     ["Hook"]))
+    # item_locations[8].add_statechange(StateChange(["has_nuke"], [True],
+    #                                     lambda state: not state.event("has_princess") and not state.event("has_nuke"),
+    #                                     ["Nuke"]))
+    # item_locations[9].add_statechange(StateChange(["has_whistle"], [True],
+    #                                     lambda state: not state.event("has_princess") and not state.event("has_whistle"),
+    #                                     ["Whistle"]))
 
     menu.add_connection(BaseConnection(start_region, lambda state: True))
     menu.add_location(BaseConnection(loc59, lambda state: True))
@@ -1327,9 +1379,10 @@ def create_region_graph():
     
     starttime = time.time()
     empty_state: ReventureState = ReventureState()
-    todo_regions: typing.List[Region] = []
-    todo_regions = [Region(menu, empty_state)]
-    todo_regions[0].apstate.potapitems.append(APItems())
+    todo_regions: typing.Set[Region] = set()
+    menuregion = Region(menu, empty_state)
+    menuregion.apstate.potapitems.append(APItems())
+    todo_regions = {menuregion}
     todo_regionsdict = {}
     for region in todo_regions:
         todo_regionsdict[region.name] = region
@@ -1341,7 +1394,7 @@ def create_region_graph():
     while todo_regions:
         # Work through regions
         # print(f"Regioncount: {len(todo_regions)}/{region_graph.count()}")
-        region: Region = todo_regions.pop(0)
+        region: Region = todo_regions.pop()
         del todo_regionsdict[region.name]
         for base_region in region.base_regions:
             for jumpconnection in base_region.jumpconnections:
@@ -1354,7 +1407,7 @@ def create_region_graph():
                     new_region = todo_regionsdict.get(name, None)
                 if new_region is None:
                     new_region = Region(jumpconnection.goal_region, region.state)
-                    todo_regions.append(new_region)
+                    todo_regions.add(new_region)
                     todo_regionsdict[new_region.name] = new_region
                 region.add_connection(Connection(new_region, jumpconnection.apitems + [f"Jump Increase_{i+1}" for i in range(reqjumpincreases)]))
 
@@ -1367,7 +1420,7 @@ def create_region_graph():
                     new_region = todo_regionsdict.get(name, None)
                 if new_region is None:
                     new_region = Region(base_connection.goal_region, region.state)
-                    todo_regions.append(new_region)
+                    todo_regions.add(new_region)
                     todo_regionsdict[new_region.name] = new_region
                 if not region in new_region.parents:
                     region.add_connection(Connection(new_region, base_connection.apitems))
@@ -1387,7 +1440,7 @@ def create_region_graph():
                 if not statechange.can_use(region.state):
                     continue
                 # Build new state
-                new_state = copy.deepcopy(region.state)
+                new_state = region.state.copy()
                 for i in range(len(statechange.states)):
                     new_state.state[statechange.states[i]] = statechange.values[i]
 
@@ -1400,7 +1453,7 @@ def create_region_graph():
                     region.add_connection(Connection(new_region, statechange.apitems))
                 
                 weight = new_state.get_weight()
-                reqjumpincreases = weight * 2
+                reqjumpincreases = weight * 2 - (startjump * 2 - 2)
                 if reqjumpincreases <= totaljumpincrease: # There are only 6 increases. If we need more, we cannot reach this statechange
                     name = get_region_name(region.base_regions, new_state)
                     new_region = region_graph.get_region(name)
@@ -1408,7 +1461,7 @@ def create_region_graph():
                         new_region = todo_regionsdict.get(name, None)
                     if new_region is None:
                         new_region = Region(region.base_regions[0], new_state)
-                        todo_regions.append(new_region)
+                        todo_regions.add(new_region)
                         todo_regionsdict[new_region.name] = new_region
                     region.add_connection(Connection(new_region, statechange.apitems))
 
@@ -1419,38 +1472,8 @@ def create_region_graph():
     print(f"Time: {time.time() - starttime}")
 
     # Setup Apstate
-    print("Adding apstates")
-    parent_todo_regions = copy.copy(list(region_graph.regiondict.values()))
-    parent_todo_regionsDict = {}
-    for region in parent_todo_regions:
-        parent_todo_regionsDict[region.name] = region
-    while len(parent_todo_regions) > 0:
-        # print(f"Apstate regions left: {len(parent_todo_regions)}")
-        region = parent_todo_regions.pop(0)
-        del parent_todo_regionsDict[region.name]
-        for connection in region.connections:
-            child = connection.region
-            prevState = copy.deepcopy(child.apstate)
-            for potapitems in region.apstate.potapitems:
-                new_potapitems = copy.deepcopy(potapitems)
-                new_potapitems.add_apitems(connection.apitems.apitems)
-                child.apstate.potapitems.append(new_potapitems)
-            child.apstate.reduce_all()
-            if child.name in parent_todo_regionsDict:
-                continue
-            if len(prevState.potapitems) != len(child.apstate.potapitems):
-                parent_todo_regions.append(child)
-                parent_todo_regionsDict[child.name] = child
-                continue
-            change = False
-            for i in range(len(child.apstate.potapitems)):
-                if len(child.apstate.potapitems[i].apitems) != len(prevState.potapitems[i].apitems):
-                    change = True
-                    break
-            if change:
-                parent_todo_regions.append(child)
-                parent_todo_regionsDict[child.name] = child
-                continue
+    print("Propagating apstates")
+    region_graph.propagate_apstates()
     print(f"Time: {time.time() - starttime}")
 
     # Remove duplicate solutions
@@ -1464,9 +1487,13 @@ def create_region_graph():
         for parent in region.parents:
             connection = parent.get_connections(region)[0] # No merging has happened yet. So there is at most one connection
             for apitems in parent.apstate.potapitems:
-                loc_apitems = copy.deepcopy(apitems)
-                loc_apitems.add_apitems(connection.apitems.apitems)
-                apitems_string = loc_apitems.to_string()
+                apitems_string = ""
+                if len(connection.apitems.apitems) != 0:
+                    loc_apitems = copy.deepcopy(apitems)
+                    loc_apitems.add_apitems(connection.apitems.apitems)
+                    apitems_string = loc_apitems.to_string()
+                else:
+                    apitems_string = apitems.to_string()
                 if not apitems_string in parent_diffed_by_apitems.keys():
                     parent_diffed_by_apitems[apitems_string] = [parent]
                 else:
@@ -1499,9 +1526,13 @@ def create_region_graph():
         for parent in region.parents:
             is_used = False
             for potapitems in parent.apstate.potapitems:
-                loc_apitems = copy.deepcopy(potapitems)
-                loc_apitems.add_apitems(connection.apitems.apitems)
-                apitems_string = loc_apitems.to_string()
+                apitems_string = ""
+                if len(connection.apitems.apitems) != 0:
+                    loc_apitems = copy.deepcopy(potapitems)
+                    loc_apitems.add_apitems(connection.apitems.apitems)
+                    apitems_string = loc_apitems.to_string()
+                else:
+                    apitems_string = potapitems.to_string()
                 if apitems_string in used_apstates:
                     is_used = True
                     break
@@ -1536,7 +1567,7 @@ def create_region_graph():
     level = 0
     while level < 5:
         change = region_graph.simplify(cleanupLevel=level)
-        print(f"Regioncount: {region_graph.count()}, Level: {level}")
+        # print(f"Regioncount: {region_graph.count()}, Level: {level}")
         if change == "":
             level += 1
         else:
@@ -1571,3 +1602,4 @@ def create_region_graph():
 
 if __name__ == "__main__":
     create_region_graph()
+    # cProfile.run('create_region_graph()', 'restats')
