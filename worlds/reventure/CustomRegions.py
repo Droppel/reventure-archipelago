@@ -5,17 +5,17 @@ import random
 import cProfile
 
 totaljumpincrease = 2
-startjump = 3
+startjump = 4
 # totaljumpincrease = 4
 # startjump = 2
 
 class APItems:
     def __init__(self):
-        self.apitems: typing.List[str] = []
+        self.apitems: typing.Set[str] = set()
     
     def add_apitem(self, item: str):
         if not item in self.apitems:
-            self.apitems.append(item)
+            self.apitems.add(item)
             return True
         return False
     
@@ -31,10 +31,12 @@ class APItems:
         return added
 
     def remove_apitems(self, items: typing.List[str]):
-        self.apitems = [item for item in self.apitems if not item in items]
+        self.apitems.difference_update(items)
+        # self.apitems = [item for item in self.apitems if not item in items]
 
     def is_subset(self, other: "APItems"):
-        return all(item in other.apitems for item in self.apitems)
+        return self.apitems.issubset(other.apitems)
+        # return all(item in other.apitems for item in self.apitems)
     
     def is_strict_subset(self, other: "APItems"):
         return self.is_subset(other) and not len(self.apitems) == len(other.apitems)
@@ -45,8 +47,7 @@ class APItems:
         self.add_apitems(items.split(", "))
 
     def to_string(self):
-        self.apitems.sort()
-        return ", ".join(self.apitems)
+        return ", ".join(sorted(self.apitems))
         
 class APState:
     def __init__(self):
@@ -83,13 +84,13 @@ class APState:
                 removedI = False
                 # if self.potapitems[i].is_subset(self.potapitems[j]):
                 # Inlined for performance
-                if all(item in self.potapitems[j].apitems for item in self.potapitems[i].apitems):
+                if self.potapitems[i].apitems.issubset(self.potapitems[j].apitems):
                     self.reducedstates.add(self.potapitems.pop(j).to_string())
                     removed = True
                     continue
                 # if self.potapitems[j].is_subset(self.potapitems[i]):
                 # Inlined for performance
-                if all(item in self.potapitems[i].apitems for item in self.potapitems[j].apitems):
+                if self.potapitems[j].apitems.issubset(self.potapitems[i].apitems):
                     self.reducedstates.add(self.potapitems.pop(i).to_string())
                     removed = True
                     removedI = True
@@ -286,7 +287,18 @@ class Region:
         for connection in donor_region.connections:
             self.add_connection(connection)
 
-    def get_reachable_regions(self, ignore = None):
+    def get_reachable_regions(self):
+        reachable_regions = set()
+        todo_regions: typing.Set[Region] = {self}
+        while len(todo_regions) > 0:
+            current_region: Region = todo_regions.pop()
+            reachable_regions.add(current_region)
+            for conn in current_region.connections:
+                if not conn.region in reachable_regions and not conn.region in todo_regions:
+                    todo_regions.add(conn.region)
+        return reachable_regions
+
+    def get_reachable_regions_ignore(self, ignore = None):
         reachable_regions = set()
         todo_regions: typing.Set[Region] = {self}
         while len(todo_regions) > 0:
@@ -353,254 +365,276 @@ class ReventureGraph:
                 import sys
                 sys.exit(1)
 
-
-    def simplify(self, cleanupLevel: int = 0):
+    def simplify(self, cleanuplevel: int = 0):
         changed = ""
-        if cleanupLevel == 0:
-            simpleRemove: typing.List[Region] = []
-            oneways: typing.List[Region] = []
+        if cleanuplevel == 0:
+            return self.simplify_0()
+        if cleanuplevel == 1:
+            return self.simplify_1()
+        if cleanuplevel == 2:
+            return self.simplify_2()
+        if cleanuplevel == 3:
+            return self.simplify_3()
+        if cleanuplevel == 4:
+            return self.simplyfy_4()
+        return changed
 
-            self.detect_errors()
-            # Check for needless regions. Never remove Menu or Regions marked as locations
-            for region in self.regiondict.values():
-                if region.name == "Menu":
-                    continue
-                if region.location:
-                    continue
-                # Remove any regions that have no parents
-                if len(region.parents) == 0:
-                    simpleRemove.append(region)
-                    continue
+    def simplify_0(self):
+        changed = ""
+        simpleRemove: typing.List[Region] = []
+        oneways: typing.List[Region] = []
 
-                # Remove any regions without connections
-                if len(region.connections) == 0:
-                    simpleRemove.append(region)
-                    continue
+        self.detect_errors()
+        # Check for needless regions. Never remove Menu or Regions marked as locations
+        for region in self.regiondict.values():
+            if region.name == "Menu":
+                continue
+            if region.location:
+                continue
+            # Remove any regions that have no parents
+            if len(region.parents) == 0:
+                simpleRemove.append(region)
+                continue
 
-                # Remove regions only connected to a single parent
-                remove = True
-                parent = region.parents[0]
-                for other_parent in region.parents[1:]:
-                    if other_parent != parent:
+            # Remove any regions without connections
+            if len(region.connections) == 0:
+                simpleRemove.append(region)
+                continue
+
+            # Remove regions only connected to a single parent
+            remove = True
+            parent = region.parents[0]
+            for other_parent in region.parents[1:]:
+                if other_parent != parent:
+                    remove = False
+                    break
+            if remove:
+                for connection in region.connections:
+                    if not connection.region == parent:
                         remove = False
                         break
                 if remove:
-                    for connection in region.connections:
-                        if not connection.region == parent:
-                            remove = False
-                            break
-                    if remove:
-                        simpleRemove.append(region)
-                        continue
-                
-                # One way regions. Only remove if the total amount of apitems is less than 3
-                if len(region.parents) == 1 and len(region.connections) == 1:
-                    connections_from_parent = region.parents[0].get_connections(region)
-                    if len(connections_from_parent) != 1 and len(region.connections[0].apitems.apitems) + len(connections_from_parent[0].apitems.apitems) > 2:
-                        continue
-                    oneways.append(region)
+                    simpleRemove.append(region)
                     continue
             
-            for region in simpleRemove:
-                self.remove_region(region)
-            
-            self.detect_errors()
-
-            for region in oneways:
-                if len(region.parents) != 1:
+            # One way regions. Only remove if the total amount of apitems is less than 3
+            if len(region.parents) == 1 and len(region.connections) == 1:
+                connections_from_parent = region.parents[0].get_connections(region)
+                if len(connections_from_parent) != 1 and len(region.connections[0].apitems.apitems) + len(connections_from_parent[0].apitems.apitems) > 2:
                     continue
-                if len(region.connections) != 1:
-                    continue
-                parent = region.parents[0]
-                connection_to_child = region.connections[0]
-                connections_from_parent = parent.get_connections(region)
-                for conn in connections_from_parent:
-                    connection_to_child.apitems.add_apitems(conn.apitems.apitems)
-                    parent.add_connection(connection_to_child)
-                self.remove_region(region)
-            
-            self.detect_errors()
-
-            # Merge regions
-            mergecount = 0
-            for region in copy.copy(list(self.regiondict.values())):
-                if region.name == "Menu":
-                    continue
-                # Free movement between two regions => merge
-                for parent in region.parents:
-                    if not parent in [con.region for con in region.connections]:
-                        continue
-                    if len(region.get_connections(parent)) != 1 or len(parent.get_connections(region)) != 1:
-                        continue # Only merge if there is a single connection between the two regions
-                    if len(region.get_connections(parent)[0].apitems.apitems) != 0 or len(parent.get_connections(region)[0].apitems.apitems) != 0:
-                        continue
-                    # print(f"Merging {region.name} into {parent.name}")
-                    parent.merge(region)
-                    self.remove_region(region)
-                    mergecount += 1
-                    # self.detect_errors(f"In Merge {region.name}, {parent.name}")
-                    break
-            if mergecount > 0:
-                changed += f"Merged {mergecount} regions\n"
-            
-            self.detect_errors()
-
-            if len(simpleRemove) + len(oneways) > 0:
-                changed += f"Removed {len(simpleRemove)} simple regions and {len(oneways)} oneways\n"
-                simpleRemove = []
-                oneways = []
-
-        if cleanupLevel == 1:
-            complexloop_count = 0
-            for region in self.regiondict.values():
-                if region.name == "Menu":
-                    continue
-                if region.location:
-                    continue
-                todo_regions = {region}
-                reachable_regions = []
-                reachable_location = False
-                while len(todo_regions) > 0 and not reachable_location:
-                    current_region = todo_regions.pop()
-                    reachable_regions.append(current_region)
-                    for connection in current_region.connections:
-                        if connection.region.location:
-                            reachable_location = True
-                            break
-                        if not connection.region in reachable_regions and not connection.region in todo_regions:
-                            todo_regions.add(connection.region)
-                if not reachable_location:
-                    for r in reachable_regions:
-                        self.remove_region(r)
-                    complexloop_count += len(reachable_regions)
-                    break
-            if complexloop_count > 0:
-                changed += f"Removed {complexloop_count} complex loop regions\n"
-            
-            # Reduce duplicate connections
-            def reduce_connections(region: Region):
-                for i in range(len(region.connections)):
-                    for j in range(i+1, len(region.connections)):
-                        if region.connections[i].region == region.connections[j].region:
-                            if region.connections[i].apitems.is_subset(region.connections[j].apitems):
-                                region.connections.pop(j)
-                                return True
-                            if region.connections[j].apitems.is_subset(region.connections[i].apitems):
-                                region.connections.pop(i)
-                                return True
-                return False
-
-            reduce_connections_count = 0
-            for region in self.regiondict.values():
-                if reduce_connections(region):
-                    reduce_connections_count += 1
-            if reduce_connections_count > 0:
-                changed += f"Reduced {reduce_connections_count} duplicate connections\n"
-        self.detect_errors()
-
-        if cleanupLevel == 2:
-            # Find sub root nodes and remove all useless connections to them
-            for region in self.regiondict.values():
-                if region.name == "Menu":
-                    continue
-                if region.location:
-                    continue
-                # Find single interconnected region that cannot reach the rest of the graph
-                reachable_regions = region.get_reachable_regions()
-
-                # Find the entrypoint from the graph
-                rootnode: Region = None
-                for reachable_region in reachable_regions:
-                    isroot = False
-                    for parent in reachable_region.parents:
-                        if not parent in reachable_regions:
-                            isroot = True
-                            break
-                    if isroot:
-                        if rootnode != None: # Multiple roots
-                            rootnode = None
-                            break
-                        rootnode = reachable_region
-                if rootnode == None:
-                    continue
-
-                removed = 0
-                for parent in copy.copy(rootnode.parents):
-                    if not parent in reachable_regions:
-                        continue
-                    removedRoot = False
-                    for conn in copy.copy(parent.connections):
-                        if conn.region == rootnode:
-                            removed += 1
-                            parent.connections.remove(conn)
-                            if not removedRoot:
-                                rootnode.parents.remove(parent)
-                                removedRoot = True
-                if removed > 0:
-                    changed += f"Removed {removed} connections to subroot {rootnode.name}\n"
-                    break
-        self.detect_errors()
-
-        if cleanupLevel == 3:
-            # Remove regions that add nothing of value
-            # We do this by checking if a regions is reachable from one of its children
-            original_region_count = self.count()
-            for region in copy.copy(list(self.regiondict.values())):
-                if region.name == "Menu":
-                    continue
-                if region.location:
-                    continue
-                if all([not conn.region.location for conn in region.connections]) and len(self.get_region("Menu").get_reachable_regions(ignore=region)) + 1 == original_region_count:
-                    self.remove_region(region)
-                    changed += f"Removed {region.name} as it is redundant\n"
-
-            # Remove unnecessary connections
-            original_region_count = self.count()
-            for region in self.regiondict.values():
-                for connection in copy.copy(region.connections):
-                    if connection.region.location:
-                        continue
-                    if len(connection.apitems.apitems) > 0:
-                        continue
-                    region.connections.remove(connection)
-                    reachable_regions = self.get_region("Menu").get_reachable_regions()
-                    if len(reachable_regions) != original_region_count:
-                        region.connections.append(connection)
-                    else:
-                        if not connection.region in [conn.region for conn in region.connections]:
-                            connection.region.parents.remove(region)
-                        changed += f"Removed unnecessary connection from {region.name} to {connection.region.name}\n"
+                oneways.append(region)
+                continue
         
+        for region in simpleRemove:
+            self.remove_region(region)
+        
+        self.detect_errors()
+
+        for region in oneways:
+            if len(region.parents) != 1:
+                continue
+            if len(region.connections) != 1:
+                continue
+            parent = region.parents[0]
+            connection_to_child = region.connections[0]
+            connections_from_parent = parent.get_connections(region)
+            for conn in connections_from_parent:
+                connection_to_child.apitems.add_apitems(conn.apitems.apitems)
+                parent.add_connection(connection_to_child)
+            self.remove_region(region)
+        
+        self.detect_errors()
+
+        # Merge regions
+        mergecount = 0
+        for region in copy.copy(list(self.regiondict.values())):
+            if region.name == "Menu":
+                continue
+            # Free movement between two regions => merge
+            for parent in region.parents:
+                if not parent in [con.region for con in region.connections]:
+                    continue
+                if len(region.get_connections(parent)) != 1 or len(parent.get_connections(region)) != 1:
+                    continue # Only merge if there is a single connection between the two regions
+                if len(region.get_connections(parent)[0].apitems.apitems) != 0 or len(parent.get_connections(region)[0].apitems.apitems) != 0:
+                    continue
+                # print(f"Merging {region.name} into {parent.name}")
+                parent.merge(region)
+                self.remove_region(region)
+                mergecount += 1
+                # self.detect_errors(f"In Merge {region.name}, {parent.name}")
+                break
+        if mergecount > 0:
+            changed += f"Merged {mergecount} regions\n"
+        
+        self.detect_errors()
+
+        if len(simpleRemove) + len(oneways) > 0:
+            changed += f"Removed {len(simpleRemove)} simple regions and {len(oneways)} oneways\n"
+            simpleRemove = []
+            oneways = []
+        self.detect_errors()
+        return changed
+
+    def simplify_1(self):
+        changed = ""
+        complexloop_count = 0
+        for region in self.regiondict.values():
+            if region.name == "Menu":
+                continue
+            if region.location:
+                continue
+            todo_regions = {region}
+            reachable_regions = []
+            reachable_location = False
+            while len(todo_regions) > 0 and not reachable_location:
+                current_region = todo_regions.pop()
+                reachable_regions.append(current_region)
+                for connection in current_region.connections:
+                    if connection.region.location:
+                        reachable_location = True
+                        break
+                    if not connection.region in reachable_regions and not connection.region in todo_regions:
+                        todo_regions.add(connection.region)
+            if not reachable_location:
+                for r in reachable_regions:
+                    self.remove_region(r)
+                complexloop_count += len(reachable_regions)
+                break
+        if complexloop_count > 0:
+            changed += f"Removed {complexloop_count} complex loop regions\n"
+        
+        # Reduce duplicate connections
+        def reduce_connections(region: Region):
+            for i in range(len(region.connections)):
+                for j in range(i+1, len(region.connections)):
+                    if region.connections[i].region == region.connections[j].region:
+                        if region.connections[i].apitems.is_subset(region.connections[j].apitems):
+                            region.connections.pop(j)
+                            return True
+                        if region.connections[j].apitems.is_subset(region.connections[i].apitems):
+                            region.connections.pop(i)
+                            return True
+            return False
+
+        reduce_connections_count = 0
+        for region in self.regiondict.values():
+            if reduce_connections(region):
+                reduce_connections_count += 1
+        if reduce_connections_count > 0:
+            changed += f"Reduced {reduce_connections_count} duplicate connections\n"
+        self.detect_errors()
+        return changed
+
+    def simplify_2(self):
+        changed = ""
+        # Find sub root nodes and remove all useless connections to them
+        for region in self.regiondict.values():
+            if region.name == "Menu":
+                continue
+            if region.location:
+                continue
+            # Find single interconnected region that cannot reach the rest of the graph
+            reachable_regions = region.get_reachable_regions()
+
+            # Find the entrypoint from the graph
+            rootnode: Region = None
+            for reachable_region in reachable_regions:
+                isroot = False
+                for parent in reachable_region.parents:
+                    if not parent in reachable_regions:
+                        isroot = True
+                        break
+                if isroot:
+                    if rootnode != None: # Multiple roots
+                        rootnode = None
+                        break
+                    rootnode = reachable_region
+            if rootnode == None:
+                continue
+
+            removed = 0
+            for parent in copy.copy(rootnode.parents):
+                if not parent in reachable_regions:
+                    continue
+                removedRoot = False
+                for conn in copy.copy(parent.connections):
+                    if conn.region == rootnode:
+                        removed += 1
+                        parent.connections.remove(conn)
+                        if not removedRoot:
+                            rootnode.parents.remove(parent)
+                            removedRoot = True
+            if removed > 0:
+                changed += f"Removed {removed} connections to subroot {rootnode.name}\n"
+                break
+        self.detect_errors()
+        return changed
+
+    def simplify_3(self):
+        changed = ""
+        # Remove regions that add nothing of value
+        # We do this by checking if a regions is reachable from one of its children
+        original_region_count = self.count()
+        for region in copy.copy(list(self.regiondict.values())):
+            if region.name == "Menu":
+                continue
+            if region.location:
+                continue
+            if all([not conn.region.location for conn in region.connections]) and len(self.get_region("Menu").get_reachable_regions_ignore(ignore=region)) + 1 == original_region_count:
+                self.remove_region(region)
+                changed += f"Removed {region.name} as it is redundant\n"
+
+        # Remove unnecessary connections
+        original_region_count = self.count()
+        for region in self.regiondict.values():
+            for connection in copy.copy(region.connections):
+                if connection.region.location:
+                    continue
+                if len(connection.apitems.apitems) > 0:
+                    continue
+                region.connections.remove(connection)
+                reachable_regions = self.get_region("Menu").get_reachable_regions()
+                if len(reachable_regions) != original_region_count:
+                    region.connections.append(connection)
+                else:
+                    if not connection.region in [conn.region for conn in region.connections]:
+                        connection.region.parents.remove(region)
+                    changed += f"Removed unnecessary connection from {region.name} to {connection.region.name}\n"
+        self.detect_errors()
+        return changed
+        
+    def simplyfy_4(self):
         # NOTE: This step is not delayed because it is very expensive. It is only delayed because it uses assumptions
         # that require the previous steps to be finished
-        if cleanupLevel == 4: 
-            # Remove bidirectional connections where one has no items (A) and one does have apitems (B).
-            # The reason this works is based on a few facts:
-            #  1. (A) is *strictly* necessary. Otherwise it would have been removed in step 3
-            #  2. (A) in a sense A is thus the "parent". If this were not the case it could have been removed.
-            #  3. It follows, that (B) is the child and a connection from a child to a parent is useless no matter the apitems it uses
-            for region in self.regiondict.values():
-                for connection in copy.copy(region.connections):
-                    if not (region in connection.region.parents):
-                        continue
-                    connectionstochild = connection.region.get_connections(region)
-                    if len(connectionstochild) != 1:
-                        continue
-                    connectionsfromchild = region.get_connections(connection.region)
-                    if len(connectionsfromchild) != 1:
-                        continue
-                    connection_to_child = connectionstochild[0]
-                    connection_from_child = connectionsfromchild[0]
-                    if len(connection_to_child.apitems.apitems) == 0 and len(connection_from_child.apitems.apitems) > 0:
-                        region.remove_connections(connection.region)
-                        connection.region.parents.remove(region)
-                        changed += f"Removed useless connection from {region.name} to {connection.region.name}\n"
-                        break
-                    elif len(connection_from_child.apitems.apitems) == 0 and len(connection_to_child.apitems.apitems) > 0:
-                        connection.region.remove_connections(region)
-                        region.parents.remove(connection.region)
-                        changed += f"Removed useless connection from {connection.region.name} to {region.name}\n"
-                        break
+        # Remove bidirectional connections where one has no items (A) and one does have apitems (B).
+        # The reason this works is based on a few facts:
+        #  1. (A) is *strictly* necessary. Otherwise it would have been removed in step 3
+        #  2. (A) in a sense A is thus the "parent". If this were not the case it could have been removed.
+        #  3. It follows, that (B) is the child and a connection from a child to a parent is useless no matter the apitems it uses
+        changed = ""
+        for region in self.regiondict.values():
+            for connection in copy.copy(region.connections):
+                if not (region in connection.region.parents):
+                    continue
+                connectionstochild = connection.region.get_connections(region)
+                if len(connectionstochild) != 1:
+                    continue
+                connectionsfromchild = region.get_connections(connection.region)
+                if len(connectionsfromchild) != 1:
+                    continue
+                connection_to_child = connectionstochild[0]
+                connection_from_child = connectionsfromchild[0]
+                if len(connection_to_child.apitems.apitems) == 0 and len(connection_from_child.apitems.apitems) > 0:
+                    region.remove_connections(connection.region)
+                    connection.region.parents.remove(region)
+                    changed += f"Removed useless connection from {region.name} to {connection.region.name}\n"
+                    break
+                elif len(connection_from_child.apitems.apitems) == 0 and len(connection_to_child.apitems.apitems) > 0:
+                    connection.region.remove_connections(region)
+                    region.parents.remove(connection.region)
+                    changed += f"Removed useless connection from {connection.region.name} to {region.name}\n"
+                    break
         self.detect_errors()
         return changed
 
@@ -911,24 +945,24 @@ def create_region_graph():
     item_locations[2].add_statechange(StateChange(["has_shovel"], [True],
                                         lambda state: not state.event("has_princess") and not state.event("has_shovel"),
                                         ["Shovel"]))
-    item_locations[3].add_statechange(StateChange(["has_bomb"], [True],
-                                        lambda state: not state.event("has_princess") and not state.event("has_bomb"),
-                                        ["Bomb"]))
-    item_locations[4].add_statechange(StateChange(["has_shield"], [True],
-                                        lambda state: not state.event("has_princess") and not state.event("has_shield"),
-                                        ["Shield"]))
-    item_locations[5].add_statechange(StateChange(["has_mrhugs"], [True],
-                                        lambda state: not state.event("has_princess") and not state.event("has_mrhugs"),
-                                        ["Mister Hugs"]))
+    # item_locations[3].add_statechange(StateChange(["has_bomb"], [True],
+    #                                     lambda state: not state.event("has_princess") and not state.event("has_bomb"),
+    #                                     ["Bomb"]))
+    # item_locations[4].add_statechange(StateChange(["has_shield"], [True],
+    #                                     lambda state: not state.event("has_princess") and not state.event("has_shield"),
+    #                                     ["Shield"]))
+    # item_locations[5].add_statechange(StateChange(["has_mrhugs"], [True],
+    #                                     lambda state: not state.event("has_princess") and not state.event("has_mrhugs"),
+    #                                     ["Mister Hugs"]))
     # item_locations[6].add_statechange(StateChange(["has_lavaTrinket"], [True],
     #                                     lambda state: not state.event("has_princess") and not state.event("has_lavaTrinket"),
     #                                     ["Lava Trinket"]))
     # item_locations[7].add_statechange(StateChange(["has_hook"], [True],
     #                                     lambda state: not state.event("has_princess") and not state.event("has_hook"),
     #                                     ["Hook"]))
-    # item_locations[8].add_statechange(StateChange(["has_nuke"], [True],
-    #                                     lambda state: not state.event("has_princess") and not state.event("has_nuke"),
-    #                                     ["Nuke"]))
+    item_locations[8].add_statechange(StateChange(["has_nuke"], [True],
+                                        lambda state: not state.event("has_princess") and not state.event("has_nuke"),
+                                        ["Nuke"]))
     # item_locations[9].add_statechange(StateChange(["has_whistle"], [True],
     #                                     lambda state: not state.event("has_princess") and not state.event("has_whistle"),
     #                                     ["Whistle"]))
@@ -1079,7 +1113,7 @@ def create_region_graph():
     ultimateDoor.add_location(BaseConnection(loc100, lambda state: True))
 
     castleMinions.add_connection(BaseConnection(castleFirstFloor, lambda state: state.event("castleBridgeDown")))
-    castleMinions.add_connection(BaseConnection(secretPathMoatWell, lambda state: True))
+    castleMinions.add_connection(BaseConnection(secretPathMoatWell, lambda state: not state.event("castleBridgeDown")))
     castleMinions.add_connection(BaseConnection(hookArea, lambda state: True))
     castleMinions.add_jumpconnection(JumpConnection(aboveHook, lambda state: True, jump_req=2))
     castleMinions.add_connection(BaseConnection(aboveHook, lambda state: state.event("has_hook")))
@@ -1566,7 +1600,7 @@ def create_region_graph():
     print("Simplifying graph")
     level = 0
     while level < 5:
-        change = region_graph.simplify(cleanupLevel=level)
+        change = region_graph.simplify(cleanuplevel=level)
         # print(f"Regioncount: {region_graph.count()}, Level: {level}")
         if change == "":
             level += 1
