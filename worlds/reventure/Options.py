@@ -52,7 +52,7 @@ class AddTreasureSword(Toggle):
     default = 0
 
 class UseExperimentalRegionGraph(Toggle):
-    """This turns on the experimental region graph"""
+    """This turns on the experimental region graph. This options is still bugged and likely to slow down generation or produce unbeatable seeds. Turn on at your own risk."""
     display_name = "UseExperimentalRegionGraph"
     option_true = 1
     option_false = 0
