@@ -2,7 +2,7 @@ import copy
 import typing
 import time
 import random
-import cProfile
+# import cProfile
 
 totaljumpincrease = 2
 startjump = 4
