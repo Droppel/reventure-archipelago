@@ -17,8 +17,9 @@ filler_items = [ 'Change Hero Name', 'Change Princess Name', 'Change Dark Lord N
 item_table: Dict[str, ItemData] = {
     'Nothing': ItemData(reventureOffset, False, special=True),
     #Sword
-    'Sword Pedestal': ItemData(reventureOffset+1, True),
-    'Sword Chest': ItemData(reventureOffset+2, True),
+    'Progressive Sword': ItemData(reventureOffset+1, True, special=True), 
+    'Sword Pedestal': ItemData(reventureOffset+2, True, special=True),
+    'Sword Chest': ItemData(reventureOffset+56, True, special=True),
     #Item Locations
     'Shovel': ItemData(reventureOffset+3, True),
     'Boomerang': ItemData(reventureOffset+4, True),
