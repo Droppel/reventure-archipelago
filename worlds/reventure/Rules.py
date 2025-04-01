@@ -29,24 +29,19 @@ def set_rules(options: PerGameCommonOptions, multiworld: MultiWorld, p: int):
                     return True
             return False
     
-    for entrance in multiworld.get_entrances(p):
-        reqitems = entrance.name.split("=")[1].split(",")
-        if reqitems == ['']:
-            set_rule(entrance, lambda state: True)
-        else:
-            set_rule(entrance, lambda state, req=copy.copy(reqitems): all([
-                state.has("Jump Increase", p, int(item.split("_")[1])) if "Jump Increase_" in item else state.has(item, p) for item in req]))
+    if options.experimentalRegionGraph:
+        for entrance in multiworld.get_entrances(p):
+            reqitems = entrance.name.split("=")[1].split(",")
+            if reqitems == ['']:
+                set_rule(entrance, lambda state: True)
+            else:
+                set_rule(entrance, lambda state, req=copy.copy(reqitems): all([
+                    state.has("Jump Increase", p, int(item.split("_")[1])) if "Jump Increase_" in item else state.has(item, p) for item in req]))
+        requiredAmount = (options.gemsInPool * options.gemsRequired) // 100
+        set_rule(multiworld.get_location("100: The End", p), lambda state: has_endings(state, p, options.endings-1) and state.has("Gem", p, requiredAmount))
+        multiworld.completion_condition[p] = lambda state: state.has("Victory", p)
+        return
     
-    # Extra location rules
-    # if options.randomizeGems: # Randomized Gems
-    requiredAmount = (options.gemsInPool * options.gemsRequired) // 100
-    set_rule(multiworld.get_location("100: The End", p), lambda state: has_endings(state, p, options.endings-1) and state.has("Gem", p, requiredAmount))
-    # else: #Vanilla Gems
-    #     set_rule(multiworld.get_location("100: The End", p), lambda state: has_endings(state, p, options.endings-1) and state.has_all(["Shovel", "Hook"], p) and has_weight(state, p, 4))
-
-    multiworld.completion_condition[p] = lambda state: state.has("Victory", p)
-    return
-
     def has_burger(state: CollectionState, p: int) -> bool:
         return state.has("Burger", p) and state.has("Dark Stone Lever Middle", p)
     

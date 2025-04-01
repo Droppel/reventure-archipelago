@@ -62,10 +62,14 @@ class ReventureWorld(World):
         pool.append(self.create_item("Jump Increase"))
 
         # Add Swords
-        # pool.append(self.create_item("Progressive Sword"))
-        # pool.append(self.create_item("Progressive Sword"))
-        # if self.options.treasureSword:
-        #     pool.append(self.create_item("Progressive Sword"))
+        if self.options.experimentalRegionGraph: # We disable this for the experimental region graph
+            pool.append(self.create_item("Sword Pedestal"))
+            pool.append(self.create_item("Sword Chest"))
+        else:
+            pool.append(self.create_item("Progressive Sword"))
+            pool.append(self.create_item("Progressive Sword"))
+            if self.options.treasureSword:
+                pool.append(self.create_item("Progressive Sword"))
         
         # Handle Gems
         if self.options.randomizeGems:
@@ -96,7 +100,7 @@ class ReventureWorld(World):
         return ReventureItem(name, self.player)
 
     def create_regions(self):
-        self.region_graph = create_regions(self.multiworld, self.player)
+        self.region_graph = create_regions(self.options, self.multiworld, self.player)
 
     def fill_slot_data(self) -> dict:
         slot_data = {}

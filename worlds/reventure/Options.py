@@ -51,6 +51,13 @@ class AddTreasureSword(Toggle):
     option_false = 0
     default = 0
 
+class UseExperimentalRegionGraph(Toggle):
+    """This turns on the experimental region graph"""
+    display_name = "Use Experimental Region Graph"
+    option_true = 1
+    option_false = 0
+    default = 0
+
 reventure_options: typing.Dict[str, type(Option)] = {
     "endings": RequiredEndings,
     "randomizeGems": RandomizeGems,
@@ -59,4 +66,5 @@ reventure_options: typing.Dict[str, type(Option)] = {
     "hardjumps": RequireFailableJumps,
     "hardcombat": RequireHardCombat,
     "treasureSword": AddTreasureSword,
+    "experimentalRegionGraph": UseExperimentalRegionGraph,
 }
