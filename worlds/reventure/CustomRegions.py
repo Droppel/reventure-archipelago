@@ -78,24 +78,34 @@ class APState:
     #     return changed
     
     def reduce_all(self):
-        removed = False
-        for i in range(len(self.potapitems)-2, -1, -1):
-            for j in range(len(self.potapitems)-1, i, -1):
-                removedI = False
-                # if self.potapitems[i].is_subset(self.potapitems[j]):
-                # Inlined for performance
-                if self.potapitems[i].apitems.issubset(self.potapitems[j].apitems):
-                    self.reducedstates.add(self.potapitems.pop(j).to_string())
-                    removed = True
-                    continue
-                # if self.potapitems[j].is_subset(self.potapitems[i]):
-                # Inlined for performance
-                if self.potapitems[j].apitems.issubset(self.potapitems[i].apitems):
-                    self.reducedstates.add(self.potapitems.pop(i).to_string())
-                    removed = True
-                    removedI = True
-                if removedI:
-                    break
+        new_potapitems: typing.List[APItems] = []
+        self.potapitems = list(sorted(self.potapitems, key=lambda x: len(x.apitems)))
+        for potapitems in self.potapitems:
+            if any(potapitems.apitems.issuperset(used.apitems) for used in new_potapitems):
+                self.reducedstates.add(potapitems.to_string())
+            else:
+                new_potapitems.append(potapitems)
+        self.potapitems = new_potapitems
+        return len(new_potapitems) != len(self.potapitems)
+
+        # removed = False
+        # for i in range(len(self.potapitems)-2, -1, -1):
+        #     for j in range(len(self.potapitems)-1, i, -1):
+        #         removedI = False
+        #         # if self.potapitems[i].is_subset(self.potapitems[j]):
+        #         # Inlined for performance
+        #         if self.potapitems[i].apitems.issubset(self.potapitems[j].apitems):
+        #             self.reducedstates.add(self.potapitems.pop(j).to_string())
+        #             removed = True
+        #             continue
+        #         # if self.potapitems[j].is_subset(self.potapitems[i]):
+        #         # Inlined for performance
+        #         if self.potapitems[j].apitems.issubset(self.potapitems[i].apitems):
+        #             self.reducedstates.add(self.potapitems.pop(i).to_string())
+        #             removed = True
+        #             removedI = True
+        #         if removedI:
+        #             break
         return removed
 
 
@@ -945,27 +955,27 @@ def create_region_graph():
     item_locations[2].add_statechange(StateChange(["has_shovel"], [True],
                                         lambda state: not state.event("has_princess") and not state.event("has_shovel"),
                                         ["Shovel"]))
-    # item_locations[3].add_statechange(StateChange(["has_bomb"], [True],
-    #                                     lambda state: not state.event("has_princess") and not state.event("has_bomb"),
-    #                                     ["Bomb"]))
-    # item_locations[4].add_statechange(StateChange(["has_shield"], [True],
-    #                                     lambda state: not state.event("has_princess") and not state.event("has_shield"),
-    #                                     ["Shield"]))
-    # item_locations[5].add_statechange(StateChange(["has_mrhugs"], [True],
-    #                                     lambda state: not state.event("has_princess") and not state.event("has_mrhugs"),
-    #                                     ["Mister Hugs"]))
-    # item_locations[6].add_statechange(StateChange(["has_lavaTrinket"], [True],
-    #                                     lambda state: not state.event("has_princess") and not state.event("has_lavaTrinket"),
-    #                                     ["Lava Trinket"]))
-    # item_locations[7].add_statechange(StateChange(["has_hook"], [True],
-    #                                     lambda state: not state.event("has_princess") and not state.event("has_hook"),
-    #                                     ["Hook"]))
+    item_locations[3].add_statechange(StateChange(["has_bomb"], [True],
+                                        lambda state: not state.event("has_princess") and not state.event("has_bomb"),
+                                        ["Bomb"]))
+    item_locations[4].add_statechange(StateChange(["has_shield"], [True],
+                                        lambda state: not state.event("has_princess") and not state.event("has_shield"),
+                                        ["Shield"]))
+    item_locations[5].add_statechange(StateChange(["has_mrhugs"], [True],
+                                        lambda state: not state.event("has_princess") and not state.event("has_mrhugs"),
+                                        ["Mister Hugs"]))
+    item_locations[6].add_statechange(StateChange(["has_lavaTrinket"], [True],
+                                        lambda state: not state.event("has_princess") and not state.event("has_lavaTrinket"),
+                                        ["Lava Trinket"]))
+    item_locations[7].add_statechange(StateChange(["has_hook"], [True],
+                                        lambda state: not state.event("has_princess") and not state.event("has_hook"),
+                                        ["Hook"]))
     item_locations[8].add_statechange(StateChange(["has_nuke"], [True],
                                         lambda state: not state.event("has_princess") and not state.event("has_nuke"),
                                         ["Nuke"]))
-    # item_locations[9].add_statechange(StateChange(["has_whistle"], [True],
-    #                                     lambda state: not state.event("has_princess") and not state.event("has_whistle"),
-    #                                     ["Whistle"]))
+    item_locations[9].add_statechange(StateChange(["has_whistle"], [True],
+                                        lambda state: not state.event("has_princess") and not state.event("has_whistle"),
+                                        ["Whistle"]))
 
     menu.add_connection(BaseConnection(start_region, lambda state: True))
     menu.add_location(BaseConnection(loc59, lambda state: True))
