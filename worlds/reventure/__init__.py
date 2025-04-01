@@ -57,9 +57,10 @@ class ReventureWorld(World):
         pool.append(self.create_item("Chicken"))
         pool.append(self.create_item("Chicken"))
 
-        # Add Jump increase
-        pool.append(self.create_item("Jump Increase"))
-        pool.append(self.create_item("Jump Increase"))
+        if self.options.experimentalRegionGraph:
+            # Add Jump increase
+            pool.append(self.create_item("Jump Increase"))
+            pool.append(self.create_item("Jump Increase"))
 
         # Add Swords
         if self.options.experimentalRegionGraph: # We disable this for the experimental region graph
@@ -108,8 +109,10 @@ class ReventureWorld(World):
             option = getattr(self.options, option_name)
             slot_data[option_name] = option.value
         
-        slot_data["spawn"] = self.region_graph.start_region.name
-        slot_data["itemlocations"] = ",".join([loc.name for loc in self.region_graph.item_locations])
+        slot_data["experimentalRegionGraph"] = self.options.experimentalRegionGraph.value
+        if self.options.experimentalRegionGraph:
+            slot_data["spawn"] = self.region_graph.start_region.name
+            slot_data["itemlocations"] = ",".join([loc.name for loc in self.region_graph.item_locations])
         return slot_data
 
     def get_filler_item_name(self) -> str:

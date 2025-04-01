@@ -22,10 +22,6 @@ def create_regions(options: PerGameCommonOptions, multiworld: MultiWorld, player
             region = multiworld.get_entrance(exit, player).connect(multiworld.get_region(target, player))
         return region_graph
 
-    # Create special endings
-    menuregion = multiworld.get_region('Menu', player)
-    menuregion.locations.append(ReventureLocation(player, '100: The End',location_table.get('100: The End', 0), menuregion))
-
     multiworld.regions += [
         create_region(multiworld, player, 'Menu', None, ['Startbutton']),
         create_region(multiworld, player, 'Reventureworld', [location for location in location_table])

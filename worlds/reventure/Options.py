@@ -53,7 +53,7 @@ class AddTreasureSword(Toggle):
 
 class UseExperimentalRegionGraph(Toggle):
     """This turns on the experimental region graph"""
-    display_name = "Use Experimental Region Graph"
+    display_name = "UseExperimentalRegionGraph"
     option_true = 1
     option_false = 0
     default = 0
