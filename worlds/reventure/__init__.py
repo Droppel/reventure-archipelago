@@ -1,8 +1,10 @@
 import copy
 from random import choice
 import string
+import typing
 
 from BaseClasses import CollectionState, Item, ItemClassification, MultiWorld, Tutorial
+from settings import Group, Bool
 from .Items import item_table, event_item_pairs, filler_items
 from .Locations import location_table
 from .Options import reventure_options
@@ -10,6 +12,13 @@ from .Regions import create_regions
 from .Rules import set_rules
 from worlds.AutoWorld import AutoLogicRegister, WebWorld, World
 from .CustomRegions import ReventureGraph
+
+
+class ReventureSettings(Group):
+    class AllowExperimentalSetting(Bool):
+        """Allows using the experimental region graph."""
+
+    allow_experimental: typing.Union[AllowExperimentalSetting, bool] = False
 
 
 class ReventureWeb(WebWorld):
@@ -35,11 +44,15 @@ class ReventureWorld(World):
     data_version = 1
     web = ReventureWeb()
     required_client_version = (0, 4, 0)
+    settings: typing.ClassVar[ReventureSettings]
 
     item_name_to_id = {name: data.code for name, data in item_table.items()}
     location_name_to_id = location_table
 
     region_graph: ReventureGraph
+
+    def isExperimentalRegionGraph(self) -> bool:
+        return self.options.experimentalRegionGraph and self.settings.allow_experimental
 
     def create_items(self):
         # Fill out our pool with our items from item_pool, assuming 1 item if not present in item_pool
@@ -57,13 +70,13 @@ class ReventureWorld(World):
         pool.append(self.create_item("Chicken"))
         pool.append(self.create_item("Chicken"))
 
-        if self.options.experimentalRegionGraph:
+        if self.isExperimentalRegionGraph():
             # Add Jump increase
             pool.append(self.create_item("Jump Increase"))
             pool.append(self.create_item("Jump Increase"))
 
         # Add Swords
-        if self.options.experimentalRegionGraph: # We disable this for the experimental region graph
+        if self.isExperimentalRegionGraph(): # We disable this for the experimental region graph
             pool.append(self.create_item("Sword Pedestal"))
             pool.append(self.create_item("Sword Chest"))
         else:
@@ -89,7 +102,7 @@ class ReventureWorld(World):
             self.multiworld.get_location(event, self.player).place_locked_item(event_item)
 
     def set_rules(self):
-        set_rules(self.options, self.multiworld, self.player)
+        set_rules(self.options, self.multiworld, self.player, self.isExperimentalRegionGraph())
         
         # from Utils import visualize_regions
         # state = self.multiworld.get_all_state(False)
@@ -101,7 +114,7 @@ class ReventureWorld(World):
         return ReventureItem(name, self.player)
 
     def create_regions(self):
-        self.region_graph = create_regions(self.options, self.multiworld, self.player)
+        self.region_graph = create_regions(self.options, self.multiworld, self.player, self.isExperimentalRegionGraph())
 
     def fill_slot_data(self) -> dict:
         slot_data = {}
@@ -109,8 +122,8 @@ class ReventureWorld(World):
             option = getattr(self.options, option_name)
             slot_data[option_name] = option.value
         
-        slot_data["experimentalRegionGraph"] = self.options.experimentalRegionGraph.value
-        if self.options.experimentalRegionGraph:
+        slot_data["experimentalRegionGraph"] = self.isExperimentalRegionGraph()
+        if self.isExperimentalRegionGraph():
             slot_data["spawn"] = self.region_graph.start_region.name
             slot_data["itemlocations"] = ",".join([loc.name for loc in self.region_graph.item_locations])
         return slot_data

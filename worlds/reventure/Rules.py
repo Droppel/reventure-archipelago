@@ -3,7 +3,7 @@ from Options import PerGameCommonOptions
 from worlds.generic.Rules import set_rule
 import copy
 
-def set_rules(options: PerGameCommonOptions, multiworld: MultiWorld, p: int):
+def set_rules(options: PerGameCommonOptions, multiworld: MultiWorld, p: int, isExperimental: bool):
     if options.endings-1 >= 50:
         # Inverted because it's faster
         def has_endings(state: CollectionState, player: int, req: int) -> bool:
@@ -29,7 +29,7 @@ def set_rules(options: PerGameCommonOptions, multiworld: MultiWorld, p: int):
                     return True
             return False
     
-    if options.experimentalRegionGraph:
+    if isExperimental:
         for entrance in multiworld.get_entrances(p):
             reqitems = entrance.name.split("=")[1].split(",")
             if reqitems == ['']:

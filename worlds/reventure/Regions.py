@@ -3,8 +3,8 @@ from Options import PerGameCommonOptions
 from .Locations import location_table
 from .CustomRegions import create_region_graph
 
-def create_regions(options: PerGameCommonOptions, multiworld: MultiWorld, player: int):
-    if options.experimentalRegionGraph:
+def create_regions(options: PerGameCommonOptions, multiworld: MultiWorld, player: int, isExperimental: bool):
+    if isExperimental:
         region_graph = create_region_graph()
 
         allexits = []
