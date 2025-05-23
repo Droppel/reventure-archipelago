@@ -122,7 +122,7 @@ class ReventureWorld(World):
             option = getattr(self.options, option_name)
             slot_data[option_name] = option.value
         
-        slot_data["experimentalRegionGraph"] = self.isExperimentalRegionGraph()
+        slot_data["experimentalRegionGraph"] = 1 if self.isExperimentalRegionGraph() else 0
         if self.isExperimentalRegionGraph():
             slot_data["spawn"] = self.region_graph.start_region.name
             slot_data["itemlocations"] = ",".join([loc.name for loc in self.region_graph.item_locations])
