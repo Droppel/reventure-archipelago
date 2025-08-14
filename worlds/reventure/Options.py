@@ -1,5 +1,6 @@
 import typing
-from Options import Option, Range, Choice, Toggle
+from dataclasses import dataclass
+from Options import Option, Range, Choice, Toggle, PerGameCommonOptions
 
 
 class RandomizeGems(Toggle):
@@ -58,13 +59,13 @@ class UseExperimentalRegionGraph(Toggle):
     option_false = 0
     default = 0
 
-reventure_options: typing.Dict[str, type(Option)] = {
-    "endings": RequiredEndings,
-    "randomizeGems": RandomizeGems,
-    "gemsInPool": GemsInPool,
-    "gemsRequired": GemsRequired,
-    "hardjumps": RequireFailableJumps,
-    "hardcombat": RequireHardCombat,
-    "treasureSword": AddTreasureSword,
-    "experimentalRegionGraph": UseExperimentalRegionGraph,
-}
+@dataclass
+class ReventureOptions(PerGameCommonOptions):
+    endings: RequiredEndings
+    randomizeGems: RandomizeGems
+    gemsInPool: GemsInPool
+    gemsRequired: GemsRequired
+    hardjumps: RequireFailableJumps
+    hardcombat: RequireHardCombat
+    treasureSword: AddTreasureSword
+    experimentalRegionGraph: UseExperimentalRegionGraph

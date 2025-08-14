@@ -7,7 +7,7 @@ from BaseClasses import CollectionState, Item, ItemClassification, MultiWorld, T
 from settings import Group, Bool
 from .Items import item_table, event_item_pairs, filler_items
 from .Locations import location_table
-from .Options import reventure_options
+from .Options import ReventureOptions
 from .Regions import create_regions
 from .Rules import set_rules
 from worlds.AutoWorld import AutoLogicRegister, WebWorld, World
@@ -38,7 +38,8 @@ class ReventureWorld(World):
     An adventure game where you find creative ways to die (And sometimes win)
     """
 
-    option_definitions = reventure_options
+    options_dataclass = ReventureOptions
+    options: ReventureOptions
     game = "Reventure"
     topology_present = False
     data_version = 1
@@ -118,9 +119,14 @@ class ReventureWorld(World):
 
     def fill_slot_data(self) -> dict:
         slot_data = {}
-        for option_name in reventure_options:
-            option = getattr(self.options, option_name)
-            slot_data[option_name] = option.value
+        
+        slot_data["endings"] = self.options.endings.value
+        slot_data["randomizeGems"] = 1 if self.options.randomizeGems else 0
+        slot_data["gemsInPool"] = self.options.gemsInPool.value
+        slot_data["gemsRequired"] = self.options.gemsRequired.value
+        slot_data["hardjumps"] = 1 if self.options.hardjumps else 0
+        slot_data["hardcombat"] = 1 if self.options.hardcombat else 0
+        slot_data["treasureSword"] = 1 if self.options.treasureSword else 0
         
         slot_data["experimentalRegionGraph"] = 1 if self.isExperimentalRegionGraph() else 0
         if self.isExperimentalRegionGraph():
