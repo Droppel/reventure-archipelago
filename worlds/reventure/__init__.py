@@ -126,6 +126,7 @@ class ReventureWorld(World):
         slot_data["gemsRequired"] = self.options.gemsRequired.value
         slot_data["hardjumps"] = 1 if self.options.hardjumps else 0
         slot_data["hardcombat"] = 1 if self.options.hardcombat else 0
+        slot_data["nonStopMode"] = self.options.nonStopMode.value
         slot_data["treasureSword"] = 1 if self.options.treasureSword else 0
         
         slot_data["experimentalRegionGraph"] = 1 if self.isExperimentalRegionGraph() else 0

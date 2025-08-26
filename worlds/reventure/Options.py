@@ -52,6 +52,18 @@ class AddTreasureSword(Toggle):
     option_false = 0
     default = 0
 
+class NonStopMode(Choice):
+    """This turns on non-stop mode, which allows continuing after getting certain endings.
+    If set to canonical, it will only allow continuing after endings that "make sense". E.g. endings where Lonk does not die canonically.
+    If set to logical, it will allow continuing after any ending that does not break logic.
+    If set to everything, it will allow continuing after any ending. This will allow you to break logic because you can e.g. walk in lava.
+    """
+    option_off = 0
+    option_canonical = 1
+    option_logical = 2
+    option_everything = 3
+    display_name = "NonStopMode"
+
 class UseExperimentalRegionGraph(Toggle):
     """This turns on the experimental region graph. This options is still bugged and likely to slow down generation or produce unbeatable seeds. Turn on at your own risk."""
     display_name = "UseExperimentalRegionGraph"
@@ -68,4 +80,5 @@ class ReventureOptions(PerGameCommonOptions):
     hardjumps: RequireFailableJumps
     hardcombat: RequireHardCombat
     treasureSword: AddTreasureSword
+    nonStopMode: NonStopMode
     experimentalRegionGraph: UseExperimentalRegionGraph
