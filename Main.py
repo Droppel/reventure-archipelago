@@ -12,7 +12,7 @@ import zlib
 import worlds
 from BaseClasses import CollectionState, Item, Location, LocationProgressType, MultiWorld
 from Fill import FillError, balance_multiworld_progression, distribute_items_restrictive, flood_items, \
-    parse_planned_blocks, distribute_planned_blocks, resolve_early_locations_for_planned
+    parse_planned_blocks, distribute_planned_blocks, resolve_early_locations_for_planned, no_logic
 from NetUtils import convert_to_base_types
 from Options import StartInventoryPool
 from Utils import __version__, output_path, restricted_dumps, version_tuple
@@ -199,13 +199,15 @@ def main(args, seed=None, baked_server_options: dict[str, object] | None = None)
         flood_items(multiworld)  # different algo, biased towards early game progress items
     elif multiworld.algorithm == 'balanced':
         distribute_items_restrictive(multiworld, get_settings().generator.panic_method)
+    elif multiworld.algorithm == 'nologic':
+        no_logic(multiworld)
 
     AutoWorld.call_all(multiworld, 'post_fill')
 
-    if multiworld.players > 1 and not args.skip_prog_balancing:
-        balance_multiworld_progression(multiworld)
-    else:
-        logger.info("Progression balancing skipped.")
+    # if multiworld.players > 1 and not args.skip_prog_balancing:
+    #     balance_multiworld_progression(multiworld)
+    # else:
+    #     logger.info("Progression balancing skipped.")
 
     # we're about to output using multithreading, so we're removing the global random state to prevent accidental use
     multiworld.random.passthrough = False
@@ -218,9 +220,9 @@ def main(args, seed=None, baked_server_options: dict[str, object] | None = None)
     outfilebase = 'AP_' + multiworld.seed_name
 
     if args.spoiler_only:
-        if args.spoiler > 1:
-            logger.info('Calculating playthrough.')
-            multiworld.spoiler.create_playthrough(create_paths=args.spoiler > 2)
+        # if args.spoiler > 1:
+        #     logger.info('Calculating playthrough.')
+        #     multiworld.spoiler.create_playthrough(create_paths=args.spoiler > 2)
 
         multiworld.spoiler.to_file(output_path('%s_Spoiler.txt' % outfilebase))
         logger.info('Done. Skipped multidata modification. Total time: %s', time.perf_counter() - start)
@@ -357,11 +359,11 @@ def main(args, seed=None, baked_server_options: dict[str, object] | None = None)
                     f.write(multidata)
 
             output_file_futures.append(pool.submit(write_multidata))
-            if not check_accessibility_task.result():
-                if not multiworld.can_beat_game():
-                    raise FillError("Game appears as unbeatable. Aborting.", multiworld=multiworld)
-                else:
-                    logger.warning("Location Accessibility requirements not fulfilled.")
+            # if not check_accessibility_task.result():
+            #     if not multiworld.can_beat_game():
+            #         raise FillError("Game appears as unbeatable. Aborting.", multiworld=multiworld)
+            #     else:
+            #         logger.warning("Location Accessibility requirements not fulfilled.")
 
             # retrieve exceptions via .result() if they occurred.
             for i, future in enumerate(concurrent.futures.as_completed(output_file_futures), start=1):

@@ -668,6 +668,47 @@ def distribute_items_restrictive(multiworld: MultiWorld,
                 f"Unplaced items({len(unplaced)}): {unplaced}"
             )
 
+def no_logic(multiworld: MultiWorld) -> None:
+    # get items to distribute
+    multiworld.random.shuffle(multiworld.itempool)
+    itempool = multiworld.itempool
+    progress_done = False
+
+    slot_location_count = []
+    for player in multiworld.player_ids:
+        slot_location_count.append([player, len(multiworld.get_unfilled_locations(player))])
+
+    slot_location_count.sort(key = lambda x: x[1], reverse=True)
+    print(slot_location_count)
+    currentPlayer = slot_location_count.pop(0)[0]
+    itemcount = 0
+
+    # fill multiworld from top of itempool while we can
+    while not progress_done:
+        location_list = multiworld.get_unfilled_locations(currentPlayer)
+        if len(location_list) == 0:
+
+            if len(multiworld.get_unfilled_locations()) == 0:
+                progress_done = True
+                continue
+            # ran out of spots, check if we need to step in and correct things
+            currentPlayer = slot_location_count.pop(0)[0]
+            print(currentPlayer)
+            print(itemcount)
+            continue
+
+        selected_item = None
+        for item in itempool:
+            if multiworld.worlds[item.player].player != currentPlayer:
+                selected_item = item
+                break
+
+        if selected_item:
+            itempool.remove(selected_item)
+            multiworld.push_item(location_list[0], selected_item, True)
+            itemcount += 1
+            continue
+
 
 def flood_items(multiworld: MultiWorld) -> None:
     # get items to distribute
