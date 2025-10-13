@@ -63,6 +63,7 @@ class NonStopMode(Choice):
     option_logical = 2
     option_everything = 3
     display_name = "NonStopMode"
+    default = 2
 
 class UseExperimentalRegionGraph(Toggle):
     """This turns on the experimental region graph. This options is still bugged and likely to slow down generation or produce unbeatable seeds. Turn on at your own risk."""
