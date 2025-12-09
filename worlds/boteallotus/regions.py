@@ -79,7 +79,28 @@ def connect_regions(world: BoTealLotusWorld) -> None:
     kb_bug_nest = world.get_region("KB Bug Nest")
     kb_south = world.get_region("KB South")
     kb_west = world.get_region("KB West")
-    
+    kb_jogomuro = world.get_region("KB Jogomuro")
+    kb_ascent = world.get_region("KB Ascent")
+
+    mm_base = world.get_region("MM Base")
+    mm_cave_ascent = world.get_region("MM Cave Ascent")
+    mm_underground = world.get_region("MM Underground")
+    mm_vista = world.get_region("MM Vista")
+    mm_village = world.get_region("MM Village")
+    mm_village_teahouse = world.get_region("MM Village Teahouse")
+    mm_main_ascent = world.get_region("MM Main Ascent")
+    mm_training_grounds = world.get_region("MM Training Grounds")
+    mm_summit = world.get_region("MM Summit")
+    mm_gunbai = world.get_region("MM Gunbai")
+    mm_optional_puzzle = world.get_region("MM Optional Puzzle")
+
+    ic_central = world.get_region("IC Central")
+    ic_tengu_1 = world.get_region("IC Tengu 1")
+    ic_west = world.get_region("IC West")
+    ic_dai_tengu = world.get_region("IC Dai Tengu")
+    ic_east_redesign = world.get_region("IC East Redesign")
+    ic_volcano = world.get_region("IC Volcano")
+
     # The region.connect helper even allows adding a rule immediately.
     # We'll talk more about rule creation in the set_all_rules() function in rules.py.
     cbf_intro.connect(cbf_bump_intro, "Intro to CBF Bump Intro")
