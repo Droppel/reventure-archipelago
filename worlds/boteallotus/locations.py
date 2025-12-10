@@ -13,7 +13,7 @@ if TYPE_CHECKING:
 # We will have a lookup from location name to ID here that, in world.py, we will import and bind to the world class.
 # Even if a location doesn't exist on specific options, it must be present in this lookup.
 LOCATION_NAME_TO_ID = {
-    "Intro Teapot": 1,
+    # "Intro Teapot": 1, Disabled for now
     # "Intro Staff Upgrade": 2, Disabled for now
     # "Bat": 2,
     # "ProgressiveDash": 3,
@@ -23,6 +23,9 @@ LOCATION_NAME_TO_ID = {
     # "WallJump": 7,
 
     "Intro Kodama": 200,
+    "Bamboo Forest Kodama 1": 201,
+    "Bamboo Forest Kodama 2": 202,
+    "Bamboo Forest Kodama 3": 203,
 }
 
 
@@ -61,6 +64,11 @@ def create_regular_locations(world: BoTealLotusWorld) -> None:
         ["Intro Teapot", "Intro Kodama"]
     )
     intro.add_locations(intro_locations, BoTealLotusLocation)
+
+    cbf_bump_intro_locations = get_location_names_with_ids(
+        ["Bamboo Forest Kodama 1", "Bamboo Forest Kodama 2", "Bamboo Forest Kodama 3"]
+    )
+    cbf_bump_intro.add_locations(cbf_bump_intro_locations, BoTealLotusLocation)
 
 
 def create_events(world: BoTealLotusWorld) -> None:

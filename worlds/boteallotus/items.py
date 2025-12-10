@@ -19,13 +19,13 @@ class ItemData():
 # We will have a lookup from item name to ID here that, in world.py, we will import and bind to the world class.
 # Even if an item doesn't exist on specific options, it must be present in this lookup.
 ITEM_NAME_TO_ID = {
-    "Staff": ItemData(1, ItemClassification.progression),
-    # "Bat": ItemData(2, ItemClassification.progression),
+    # "Staff": ItemData(1, ItemClassification.progression),
+    "Bat": ItemData(2, ItemClassification.progression),
     # "Progressive Dash": ItemData(3, ItemClassification.progression),
     # "Grapple": ItemData(4, ItemClassification.progression),
     # "Stomp": ItemData(5, ItemClassification.progression),
-    # "Hover": ItemData(6, ItemClassification.progression),
-    # "WallJump": ItemData(7, ItemClassification.progression),
+    "Hover": ItemData(6, ItemClassification.progression),
+    "WallJump": ItemData(7, ItemClassification.progression),
 
     "10 Fox Fire": ItemData(100, ItemClassification.filler, filler=True),
 

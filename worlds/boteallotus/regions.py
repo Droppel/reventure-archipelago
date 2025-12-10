@@ -104,3 +104,5 @@ def connect_regions(world: BoTealLotusWorld) -> None:
     # The region.connect helper even allows adding a rule immediately.
     # We'll talk more about rule creation in the set_all_rules() function in rules.py.
     cbf_intro.connect(cbf_bump_intro, "Intro to CBF Bump Intro")
+    cbf_bump_intro.connect(cbf_cave_entrance, "CBF Bump Intro to CBF Cave Entrance")
+    cbf_cave_entrance.connect(uc_cave_entrance, "CBF Cave Entrance to UC Cave Entrance", lambda state: state.has_all(["Bat", "Staff"], world.player))

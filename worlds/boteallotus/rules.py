@@ -21,15 +21,16 @@ def set_all_rules(world: BoTealLotusWorld) -> None:
 
 
 def set_all_entrance_rules(world: BoTealLotusWorld) -> None:
-    intro_to_cbf_bump_intro = world.get_entrance("Intro to CBF Bump Intro")
-
-    set_rule(intro_to_cbf_bump_intro, lambda state: True)
+    pass
 
 
 
 def set_all_location_rules(world: BoTealLotusWorld) -> None:
     add_rule(world.get_location("Intro Teapot"), lambda state: True)
-    add_rule(world.get_location("Intro Kodama"), lambda state: state.has_any(["Staff"], world.player))
+    add_rule(world.get_location("Intro Kodama"), lambda state: True)
+    add_rule(world.get_location("Bamboo Forest Kodama 1"), lambda state: True)
+    add_rule(world.get_location("Bamboo Forest Kodama 2"), lambda state: True)
+    add_rule(world.get_location("Bamboo Forest Kodama 3"), lambda state: True)
 
 
 def set_completion_condition(world: BoTealLotusWorld) -> None:
