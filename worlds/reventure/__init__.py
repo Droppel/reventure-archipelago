@@ -71,10 +71,10 @@ class ReventureWorld(World):
         pool.append(self.create_item("Chicken"))
         pool.append(self.create_item("Chicken"))
 
-        if self.isExperimentalRegionGraph():
-            # Add Jump increase
-            pool.append(self.create_item("Jump Increase"))
-            pool.append(self.create_item("Jump Increase"))
+        # if self.isExperimentalRegionGraph():
+        #     # Add Jump increase
+        #     pool.append(self.create_item("Jump Increase"))
+        #     pool.append(self.create_item("Jump Increase"))
 
         # Add Swords
         if self.isExperimentalRegionGraph(): # We disable this for the experimental region graph

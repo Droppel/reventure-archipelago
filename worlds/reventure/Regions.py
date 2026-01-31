@@ -1,11 +1,12 @@
 from BaseClasses import Entrance, Location, MultiWorld, Region
 from Options import PerGameCommonOptions
 from .Locations import location_table
-from .CustomRegions import create_region_graph
+from .CustomRegions import create_region_graph, parse_region_graph_from_file
 
 def create_regions(options: PerGameCommonOptions, multiworld: MultiWorld, player: int, isExperimental: bool):
     if isExperimental:
-        region_graph = create_region_graph()
+        # region_graph = create_region_graph()
+        region_graph = parse_region_graph_from_file("output.reg")
 
         allexits = []
         for graph_region in region_graph.regiondict.values():
@@ -22,6 +23,7 @@ def create_regions(options: PerGameCommonOptions, multiworld: MultiWorld, player
             region = multiworld.get_entrance(exit, player).connect(multiworld.get_region(target, player))
         return region_graph
 
+    # Normal creation
     multiworld.regions += [
         create_region(multiworld, player, 'Menu', None, ['Startbutton']),
         create_region(multiworld, player, 'Reventureworld', [location for location in location_table])

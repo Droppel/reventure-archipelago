@@ -1644,6 +1644,23 @@ def create_region_graph():
     #     else:
     #         continue
 
+def parse_region_graph_from_file(filename: str) -> ReventureGraph:
+    region_graph = ReventureGraph()
+    with open(filename, 'r') as f:
+        lines = "\n".join(f.readlines())
+        lines = lines.split("NEWREGION\n")[1:]  # First split is empty
+        for regiondata in lines:
+            region_lines = regiondata.strip().split("\n")
+            region_name = region_lines[0].strip()
+            region_name = region_name.split("|")
+            region = Region(region_name[0], ReventureState(), location=region_name[1] == "True")
+            for line in region_lines[1:]:
+                goal = line.split("|")[0]
+                apitems = line.split("|")[1].split(",") if line.split("|")[1] != "" else []
+                region.add_connection(Connection(region_graph.get_region(goal), APItems(apitems)))
+            region_graph.add_region(region)            
+    return region_graph
+
 if __name__ == "__main__":
     create_region_graph()
     # cProfile.run('create_region_graph()', 'restats')
