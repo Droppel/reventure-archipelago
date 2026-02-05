@@ -4,29 +4,37 @@ from .Locations import location_table
 from .CustomRegions import create_region_graph, parse_region_graph_from_file
 
 def create_regions(options: PerGameCommonOptions, multiworld: MultiWorld, player: int, isExperimental: bool):
-    if isExperimental:
-        # region_graph = create_region_graph()
-        region_graph = parse_region_graph_from_file("output.reg")
+    # if isExperimental:
+    #     # region_graph = create_region_graph()
+    #     region_graph = parse_region_graph_from_file("PlayersExtra/output.reg")
 
-        allexits = []
-        for graph_region in region_graph.regiondict.values():
-            locations = None
-            if graph_region.location:
-                locations = [graph_region.name]
-            exits = [f"{graph_region.name}={",".join(connection.apitems.apitems)}={connection.region.name}" for connection in graph_region.connections]
-            allexits += exits
-            region = create_region(multiworld, player, graph_region.name, locations, exits)
-            multiworld.regions.append(region)
+    #     allexits = []
+    #     for graph_region in region_graph.regiondict.values():
+    #         locations = None
+    #         if graph_region.location:
+    #             locations = [graph_region.name]
+    #         exits = [f"{graph_region.name}={",".join(connection.apitems.apitems)}={connection.region.name}" for connection in graph_region.connections]
+    #         allexits += exits
+    #         region = create_region(multiworld, player, graph_region.name, locations, exits)
+    #         multiworld.regions.append(region)
 
-        for exit in allexits:
-            (name, apitems, target) = exit.split('=')
-            region = multiworld.get_entrance(exit, player).connect(multiworld.get_region(target, player))
-        return region_graph
+    #     for exit in allexits:
+    #         (name, apitems, target) = exit.split('=')
+    #         region = multiworld.get_entrance(exit, player).connect(multiworld.get_region(target, player))
+    #     return region_graph
 
     # Normal creation
+
+    locations = []
+    with open("PlayersExtra/location_apstates.txt", 'r') as f:
+        lines = f.readlines()
+        for line in lines[2:]:
+            loc_name = line.split('=')[0]
+            if loc_name:
+                locations.append(loc_name)
     multiworld.regions += [
         create_region(multiworld, player, 'Menu', None, ['Startbutton']),
-        create_region(multiworld, player, 'Reventureworld', [location for location in location_table])
+        create_region(multiworld, player, 'Reventureworld', locations)
     ]
 
     # link up our region with the entrance we just made

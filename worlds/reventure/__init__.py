@@ -100,7 +100,7 @@ class ReventureWorld(World):
         # Place locked event items
         for event, item in event_item_pairs.items():
             event_item = ReventureItem(item, self.player)
-            self.multiworld.get_location(event, self.player).place_locked_item(event_item)
+            self.get_location(event).place_locked_item(event_item)
 
     def set_rules(self):
         set_rules(self.options, self.multiworld, self.player, self.isExperimentalRegionGraph())
@@ -131,8 +131,10 @@ class ReventureWorld(World):
         
         slot_data["experimentalRegionGraph"] = 1 if self.isExperimentalRegionGraph() else 0
         if self.isExperimentalRegionGraph():
-            slot_data["spawn"] = self.region_graph.start_region.name
-            slot_data["itemlocations"] = ",".join([loc.name for loc in self.region_graph.item_locations])
+            with open("PlayersExtra/location_apstates.txt", 'r') as f:
+                lines = f.readlines()
+                slot_data["spawn"] = lines[0].strip()
+                slot_data["itemlocations"] = lines[1].strip()
         return slot_data
 
     def get_filler_item_name(self) -> str:

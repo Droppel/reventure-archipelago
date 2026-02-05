@@ -958,24 +958,24 @@ def create_region_graph():
     item_locations[3].add_statechange(StateChange(["has_bomb"], [True],
                                         lambda state: not state.event("has_princess") and not state.event("has_bomb"),
                                         ["Bomb"]))
-    item_locations[4].add_statechange(StateChange(["has_shield"], [True],
-                                        lambda state: not state.event("has_princess") and not state.event("has_shield"),
-                                        ["Shield"]))
-    item_locations[5].add_statechange(StateChange(["has_mrhugs"], [True],
-                                        lambda state: not state.event("has_princess") and not state.event("has_mrhugs"),
-                                        ["Mister Hugs"]))
-    item_locations[6].add_statechange(StateChange(["has_lavaTrinket"], [True],
-                                        lambda state: not state.event("has_princess") and not state.event("has_lavaTrinket"),
-                                        ["Lava Trinket"]))
+    # item_locations[4].add_statechange(StateChange(["has_shield"], [True],
+    #                                     lambda state: not state.event("has_princess") and not state.event("has_shield"),
+    #                                     ["Shield"]))
+    # item_locations[5].add_statechange(StateChange(["has_mrhugs"], [True],
+    #                                     lambda state: not state.event("has_princess") and not state.event("has_mrhugs"),
+    #                                     ["Mister Hugs"]))
+    # item_locations[6].add_statechange(StateChange(["has_lavaTrinket"], [True],
+    #                                     lambda state: not state.event("has_princess") and not state.event("has_lavaTrinket"),
+    #                                     ["Lava Trinket"]))
     item_locations[7].add_statechange(StateChange(["has_hook"], [True],
                                         lambda state: not state.event("has_princess") and not state.event("has_hook"),
                                         ["Hook"]))
-    item_locations[8].add_statechange(StateChange(["has_nuke"], [True],
-                                        lambda state: not state.event("has_princess") and not state.event("has_nuke"),
-                                        ["Nuke"]))
-    item_locations[9].add_statechange(StateChange(["has_whistle"], [True],
-                                        lambda state: not state.event("has_princess") and not state.event("has_whistle"),
-                                        ["Whistle"]))
+    # item_locations[8].add_statechange(StateChange(["has_nuke"], [True],
+    #                                     lambda state: not state.event("has_princess") and not state.event("has_nuke"),
+    #                                     ["Nuke"]))
+    # item_locations[9].add_statechange(StateChange(["has_whistle"], [True],
+    #                                     lambda state: not state.event("has_princess") and not state.event("has_whistle"),
+    #                                     ["Whistle"]))
 
     menu.add_connection(BaseConnection(start_region, lambda state: True))
     menu.add_location(BaseConnection(loc59, lambda state: True))
@@ -1275,11 +1275,11 @@ def create_region_graph():
     levers.add_location(BaseConnection(loc38, lambda state: not state.event("has_princess"), ["Dark Stone Lever Left"]))
     levers.add_location(BaseConnection(loc44, lambda state: not state.event("has_princess"), ["Dark Stone Lever Right"]))
 
-    darkstone.add_connection(BaseConnection(levers, lambda state: True))
-    darkstone.add_statechange(StateChange(["has_darkstone"], [True],
-                                        lambda state: not state.event("has_princess") and not state.event("has_darkstone"), ["Darkstone"]))
-    darkstone.add_statechange(StateChange(["has_burger"], [True],
-                                        lambda state: not state.event("has_princess") and not state.event("has_burger"), ["Burger"]))
+    # darkstone.add_connection(BaseConnection(levers, lambda state: True))
+    # darkstone.add_statechange(StateChange(["has_darkstone"], [True],
+    #                                     lambda state: not state.event("has_princess") and not state.event("has_darkstone"), ["Darkstone"]))
+    # darkstone.add_statechange(StateChange(["has_burger"], [True],
+    #                                     lambda state: not state.event("has_princess") and not state.event("has_burger"), ["Burger"]))
 
     greatWaterfall.add_jumpconnection(JumpConnection(altar, lambda state: True, jump_req=2))
     greatWaterfall.add_connection(BaseConnection(belowFishingBridge, lambda state: True))
@@ -1529,6 +1529,8 @@ def create_region_graph():
             continue
         parent_diffed_by_apitems: typing.Dict[str, typing.List[Region]] = {}
         for parent in region.parents:
+            if len(parent.get_connections(region)) > 1:
+                raise Exception("Multiple connections between regions found before merging!")
             connection = parent.get_connections(region)[0] # No merging has happened yet. So there is at most one connection
             for apitems in parent.apstate.potapitems:
                 apitems_string = ""
@@ -1646,18 +1648,33 @@ def create_region_graph():
 
 def parse_region_graph_from_file(filename: str) -> ReventureGraph:
     region_graph = ReventureGraph()
+    region_graph.start_region = BaseRegion("LonksHouse")
+    region_graph.item_locations = [BaseRegion("LonksHouse"),
+                                    BaseRegion("Elder"), 
+                                    BaseRegion("Shovel"), 
+                                    BaseRegion("Bomb"), 
+                                    BaseRegion("CastleShieldChest"), 
+                                    BaseRegion("PrincessRoom"), 
+                                    BaseRegion("LavaTrinket"), 
+                                    BaseRegion("HookArea"), 
+                                    BaseRegion("NukeStorage"), 
+                                    BaseRegion("Whistle")]
+
     with open(filename, 'r') as f:
-        lines = "\n".join(f.readlines())
+        lines = "".join(f.readlines())
         lines = lines.split("NEWREGION\n")[1:]  # First split is empty
         for regiondata in lines:
             region_lines = regiondata.strip().split("\n")
             region_name = region_lines[0].strip()
             region_name = region_name.split("|")
-            region = Region(region_name[0], ReventureState(), location=region_name[1] == "True")
+            baseregion = BaseRegion(region_name[0])
+            region = Region(baseregion, ReventureState(), location=region_name[1] == "true")
             for line in region_lines[1:]:
                 goal = line.split("|")[0]
+                goalbaseregion = BaseRegion(goal)
+                goal_region = Region(goalbaseregion, ReventureState(), False)
                 apitems = line.split("|")[1].split(",") if line.split("|")[1] != "" else []
-                region.add_connection(Connection(region_graph.get_region(goal), APItems(apitems)))
+                region.add_connection(Connection(goal_region, apitems))
             region_graph.add_region(region)            
     return region_graph
 

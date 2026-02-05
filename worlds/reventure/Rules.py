@@ -1,6 +1,6 @@
 from BaseClasses import CollectionState, MultiWorld
 from Options import PerGameCommonOptions
-from worlds.generic.Rules import set_rule
+from worlds.generic.Rules import set_rule, add_rule
 import copy
 
 def set_rules(options: PerGameCommonOptions, multiworld: MultiWorld, p: int, isExperimental: bool):
@@ -30,13 +30,21 @@ def set_rules(options: PerGameCommonOptions, multiworld: MultiWorld, p: int, isE
             return False
     
     if isExperimental:
-        for entrance in multiworld.get_entrances(p):
-            reqitems = entrance.name.split("=")[1].split(",")
-            if reqitems == ['']:
-                set_rule(entrance, lambda state: True)
-            else:
-                set_rule(entrance, lambda state, req=copy.copy(reqitems): all([
-                    state.has("Jump Increase", p, int(item.split("_")[1])) if "Jump Increase_" in item else state.has(item, p) for item in req]))
+        with open("PlayersExtra/location_apstates.txt", 'r') as f:
+            lines = f.readlines()
+            for i in range(2, len(lines)):
+                line = lines[i].strip()
+                if not line:
+                    continue
+                (loc_name, rule_str) = line.split('=')
+                location = multiworld.get_location(loc_name, p)
+                if len(rule_str) == 0:
+                    set_rule(location, lambda state: True)
+                else:
+                    rules = rule_str.split('|')
+                    set_rule(location, lambda state: all(rules[0].split('&')))
+                    for rule in rules[1:]:
+                        add_rule(location, lambda state: all(rule.split('&')))
         requiredAmount = (options.gemsInPool * options.gemsRequired) // 100
         set_rule(multiworld.get_location("100: The End", p), lambda state: has_endings(state, p, options.endings-1) and state.has("Gem", p, requiredAmount))
         multiworld.completion_condition[p] = lambda state: state.has("Victory", p)
