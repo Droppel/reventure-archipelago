@@ -2,8 +2,9 @@ from BaseClasses import Entrance, Location, MultiWorld, Region
 from Options import PerGameCommonOptions
 from .Locations import location_table
 from .CustomRegions import create_region_graph, parse_region_graph_from_file
+from .Options import ReventureOptions
 
-def create_regions(options: PerGameCommonOptions, multiworld: MultiWorld, player: int, isExperimental: bool):
+def create_regions(options: ReventureOptions, multiworld: MultiWorld, player: int, isExperimental: bool):
     # if isExperimental:
     #     # region_graph = create_region_graph()
     #     region_graph = parse_region_graph_from_file("PlayersExtra/output.reg")
@@ -26,12 +27,12 @@ def create_regions(options: PerGameCommonOptions, multiworld: MultiWorld, player
     # Normal creation
 
     locations = []
-    with open("PlayersExtra/location_apstates.txt", 'r') as f:
-        lines = f.readlines()
-        for line in lines[2:]:
-            loc_name = line.split('=')[0]
-            if loc_name:
-                locations.append(loc_name)
+    for loc_name in options.logic.keys():
+        if loc_name == "start_region" or loc_name == "item_locations" or loc_name == "starting_jumps" or loc_name == "total_jump_increase":
+            continue
+        loc_name = loc_name.replace("_", " ")
+        if loc_name:
+            locations.append(loc_name)
     multiworld.regions += [
         create_region(multiworld, player, 'Menu', None, ['Startbutton']),
         create_region(multiworld, player, 'Reventureworld', locations)

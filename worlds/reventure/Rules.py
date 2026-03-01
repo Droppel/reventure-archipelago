@@ -1,9 +1,92 @@
 from BaseClasses import CollectionState, MultiWorld
 from Options import PerGameCommonOptions
+from .Options import ReventureOptions
 from worlds.generic.Rules import set_rule, add_rule
 import copy
+import ast
+from .Items import item_table
 
-def set_rules(options: PerGameCommonOptions, multiworld: MultiWorld, p: int, isExperimental: bool):
+class ReventureTransformer(ast.NodeTransformer):
+    def visit_Name(self, node):
+        if "JumpIncrease" in node.id:
+            name, count = node.id.split("_")
+            return ast.Call(
+                func=ast.Attribute(
+                    value=ast.Name(id="state", ctx=ast.Load()),
+                    attr="has",
+                    ctx=ast.Load()                ),
+                args=[ast.Constant(name),
+                      ast.Name(id="p", ctx=ast.Load()), 
+                      ast.Constant(int(count))
+                ],
+                keywords=[]
+            )
+        return ast.Call(
+            func=ast.Attribute(
+                value=ast.Name(id="state", ctx=ast.Load()),
+                attr="has",
+                ctx=ast.Load()
+            ),
+            args=[ast.Constant(node.id),
+                  ast.Name(id="p", ctx=ast.Load()),
+            ],
+            keywords=[]
+        )
+
+    def visit_BinOp(self, node):
+        # Convert `*` to `and`
+        if isinstance(node.op, ast.Mult):
+            return ast.BoolOp(
+                op=ast.And(),
+                values=[self.visit(node.left), self.visit(node.right)]
+            )
+        if isinstance(node.op, ast.Add):
+            return ast.BoolOp(
+                op=ast.Or(),
+                values=[self.visit(node.left), self.visit(node.right)]
+            )
+        return self.generic_visit(node)
+
+    def visit(self, node):
+        # Only allow safe node types
+        allowed = (
+            ast.Expression,
+            ast.BoolOp,
+            ast.BinOp,
+            ast.Name,
+            ast.Load,
+            ast.And,
+            ast.Mult,
+            ast.Constant,
+            ast.Call,
+            ast.Attribute,
+        )
+        if not isinstance(node, allowed):
+            raise ValueError(f"Unsupported AST node: {type(node)}")
+        return super().visit(node)
+
+def compile_rule(rule_str: str):
+    transformer = ReventureTransformer()
+    asttree = ast.parse(rule_str, mode='eval')
+    rule = transformer.visit(asttree)
+
+    ast.fix_missing_locations(rule)
+    lambda_func = ast.Expression(
+        body=ast.Lambda(
+            args=ast.arguments(
+                posonlyargs=[],
+                args=[ast.arg(arg='state'), ast.arg(arg='p')],
+                kwonlyargs=[],
+                kw_defaults=[],
+                defaults=[]
+            ),
+            body=rule.body
+        )
+    )
+    ast.fix_missing_locations(lambda_func)
+    return eval(compile(lambda_func, filename="<ast>", mode="eval"))
+
+def set_rules(options: ReventureOptions, multiworld: MultiWorld, p: int, isExperimental: bool):
     if options.endings-1 >= 50:
         # Inverted because it's faster
         def has_endings(state: CollectionState, player: int, req: int) -> bool:
@@ -30,21 +113,15 @@ def set_rules(options: PerGameCommonOptions, multiworld: MultiWorld, p: int, isE
             return False
     
     if isExperimental:
-        with open("PlayersExtra/location_apstates.txt", 'r') as f:
-            lines = f.readlines()
-            for i in range(2, len(lines)):
-                line = lines[i].strip()
-                if not line:
-                    continue
-                (loc_name, rule_str) = line.split('=')
-                location = multiworld.get_location(loc_name, p)
-                if len(rule_str) == 0:
-                    set_rule(location, lambda state: True)
-                else:
-                    rules = rule_str.split('|')
-                    set_rule(location, lambda state: all(rules[0].split('&')))
-                    for rule in rules[1:]:
-                        add_rule(location, lambda state: all(rule.split('&')))
+        for (loc_name, rule_str) in options.logic.items():
+            if loc_name == "start_region" or loc_name == "item_locations" or loc_name == "starting_jumps" or loc_name == "total_jump_increase":
+                continue
+            loc_name = loc_name.replace("_", " ")
+            location = multiworld.get_location(loc_name, p)
+            if rule_str == "1":
+                set_rule(location, lambda state: True)
+            else:
+                set_rule(location, compile_rule(rule_str))
         requiredAmount = (options.gemsInPool * options.gemsRequired) // 100
         set_rule(multiworld.get_location("100: The End", p), lambda state: has_endings(state, p, options.endings-1) and state.has("Gem", p, requiredAmount))
         multiworld.completion_condition[p] = lambda state: state.has("Victory", p)

@@ -1,7 +1,6 @@
 import typing
 from dataclasses import dataclass
-from Options import Option, Range, Choice, Toggle, PerGameCommonOptions
-
+from Options import Option, Range, Choice, Toggle, PerGameCommonOptions, OptionDict
 
 class RandomizeGems(Toggle):
     """If the gem unlocks should be randomized"""
@@ -72,6 +71,9 @@ class UseExperimentalRegionGraph(Toggle):
     option_false = 0
     default = 0
 
+class LogicDict(OptionDict):
+    display_name = "Logic"
+
 @dataclass
 class ReventureOptions(PerGameCommonOptions):
     endings: RequiredEndings
@@ -83,3 +85,4 @@ class ReventureOptions(PerGameCommonOptions):
     treasureSword: AddTreasureSword
     nonStopMode: NonStopMode
     experimentalRegionGraph: UseExperimentalRegionGraph
+    logic: LogicDict

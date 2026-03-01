@@ -131,10 +131,10 @@ class ReventureWorld(World):
         
         slot_data["experimentalRegionGraph"] = 1 if self.isExperimentalRegionGraph() else 0
         if self.isExperimentalRegionGraph():
-            with open("PlayersExtra/location_apstates.txt", 'r') as f:
-                lines = f.readlines()
-                slot_data["spawn"] = lines[0].strip()
-                slot_data["itemlocations"] = lines[1].strip()
+            slot_data["spawn"] = self.options.logic.get("start_region", "LonksHouse")
+            slot_data["itemlocations"] = self.options.logic.get("item_locations", "")
+            slot_data["startingjumps"] = self.options.logic.get("starting_jumps", 3)
+            slot_data["totaljumpincrease"] = self.options.logic.get("total_jump_increase", 0)
         return slot_data
 
     def get_filler_item_name(self) -> str:
