@@ -91,6 +91,12 @@ class ReventureWorld(World):
             for _ in range(0, self.options.gemsInPool):
                 pool.append(self.create_item("Gem"))
 
+        # Handle Jump Increases
+        total_jump_increases = self.options.logic.get("total_jump_increase", 0)
+        total_jump_increases = int(total_jump_increases)
+        for i in range(0, total_jump_increases):
+            pool.append(self.create_item(f"Jump Increase"))
+
         # Fill pool with filler items
         for _ in range(0, total_location_count - len(pool)):
             pool.append(self.create_item(self.get_filler_item_name()))
@@ -107,9 +113,9 @@ class ReventureWorld(World):
         
         # from Utils import visualize_regions
         # state = self.multiworld.get_all_state(False)
-        # state.prog_items[self.player]["Volcano Geyser"] -= 1
+        # # state.prog_items[self.player]["Volcano Geyser"] -= 1
         # state.update_reachable_regions(self.player)
-        # visualize_regions(self.multiworld.get_region("Menu", self.player), "my_world.puml", show_entrance_names=True, highlight_regions=state.reachable_regions[self.player])
+        # visualize_regions(self.multiworld.get_region("Menu", self.player), "my_world.puml", show_entrance_names=True, regions_to_highlight=state.reachable_regions[self.player])
 
     def create_item(self, name: str) -> Item:
         return ReventureItem(name, self.player)
@@ -134,7 +140,6 @@ class ReventureWorld(World):
             slot_data["spawn"] = self.options.logic.get("start_region", "LonksHouse")
             slot_data["itemlocations"] = self.options.logic.get("item_locations", "")
             slot_data["startingjumps"] = self.options.logic.get("starting_jumps", 3)
-            slot_data["totaljumpincrease"] = self.options.logic.get("total_jump_increase", 0)
         return slot_data
 
     def get_filler_item_name(self) -> str:

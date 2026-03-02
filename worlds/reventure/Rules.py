@@ -7,27 +7,36 @@ import ast
 from .Items import item_table
 
 class ReventureTransformer(ast.NodeTransformer):
+    def add_spaces(self, s):
+        result = ""
+        for char in s:
+            if char.isupper() and result and result[-1] != " ":
+                result += " "
+            result += char
+        return result
+
     def visit_Name(self, node):
+        has_func = ast.Attribute(
+            value=ast.Name(id="state", ctx=ast.Load()),
+            attr="has",
+            ctx=ast.Load()
+        )
+
         if "JumpIncrease" in node.id:
             name, count = node.id.split("_")
+            name = self.add_spaces(name)
+            count = int(count)
             return ast.Call(
-                func=ast.Attribute(
-                    value=ast.Name(id="state", ctx=ast.Load()),
-                    attr="has",
-                    ctx=ast.Load()                ),
+                func=has_func,
                 args=[ast.Constant(name),
                       ast.Name(id="p", ctx=ast.Load()), 
-                      ast.Constant(int(count))
+                      ast.Constant(count)
                 ],
                 keywords=[]
             )
         return ast.Call(
-            func=ast.Attribute(
-                value=ast.Name(id="state", ctx=ast.Load()),
-                attr="has",
-                ctx=ast.Load()
-            ),
-            args=[ast.Constant(node.id),
+            func=has_func,
+            args=[ast.Constant(self.add_spaces(node.id)),
                   ast.Name(id="p", ctx=ast.Load()),
             ],
             keywords=[]
@@ -65,7 +74,7 @@ class ReventureTransformer(ast.NodeTransformer):
             raise ValueError(f"Unsupported AST node: {type(node)}")
         return super().visit(node)
 
-def compile_rule(rule_str: str):
+def compile_rule(rule_str: str, p: int):
     transformer = ReventureTransformer()
     asttree = ast.parse(rule_str, mode='eval')
     rule = transformer.visit(asttree)
@@ -75,7 +84,7 @@ def compile_rule(rule_str: str):
         body=ast.Lambda(
             args=ast.arguments(
                 posonlyargs=[],
-                args=[ast.arg(arg='state'), ast.arg(arg='p')],
+                args=[ast.arg(arg='state')],
                 kwonlyargs=[],
                 kw_defaults=[],
                 defaults=[]
@@ -84,7 +93,9 @@ def compile_rule(rule_str: str):
         )
     )
     ast.fix_missing_locations(lambda_func)
-    return eval(compile(lambda_func, filename="<ast>", mode="eval"))
+
+    compiled = compile(lambda_func, filename="<ast>", mode="eval")
+    return eval(compiled, {"p": p})
 
 def set_rules(options: ReventureOptions, multiworld: MultiWorld, p: int, isExperimental: bool):
     if options.endings-1 >= 50:
@@ -121,7 +132,7 @@ def set_rules(options: ReventureOptions, multiworld: MultiWorld, p: int, isExper
             if rule_str == "1":
                 set_rule(location, lambda state: True)
             else:
-                set_rule(location, compile_rule(rule_str))
+                set_rule(location, compile_rule(rule_str, p))
         requiredAmount = (options.gemsInPool * options.gemsRequired) // 100
         set_rule(multiworld.get_location("100: The End", p), lambda state: has_endings(state, p, options.endings-1) and state.has("Gem", p, requiredAmount))
         multiworld.completion_condition[p] = lambda state: state.has("Victory", p)
